@@ -41,7 +41,7 @@ This will build the package in `packages/zoro-sdk/dist/` with both ESM and Commo
 pnpm run dev
 ```
 
-This will start the demo app at `http://localhost:3000`.
+This will start the React demo app at `http://localhost:3000`.
 
 ## Package Usage
 
