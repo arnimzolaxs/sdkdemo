@@ -12,7 +12,7 @@ function App() {
     // Initialize the SDK
     zoro.init({
       appName: 'Zoro SDK Demo',
-      network: 'mainnet',
+      network: 'local',
       onAccept: (provider) => {
         console.log('Connected!', provider);
         setProvider(provider);
@@ -23,7 +23,9 @@ function App() {
         console.log('Connection rejected');
         setStatus({ text: 'Connection rejected', connected: false });
         setIsConnecting(false);
-      }
+      },
+      walletUrl: 'http://localhost:8081',
+      apiUrl: 'http://localhost:1337'
     });
   }, []);
 

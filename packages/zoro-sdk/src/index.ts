@@ -88,7 +88,9 @@ export class ZoroSDK {
                 party_id: partyId,
                 auth_token: authToken,
                 public_key: publicKey,
-                email
+                email,
+                openWallet: this.openWallet.bind(this),
+                walletUrl: this.connection!.walletUrl
               });
               
               this.onAccept?.(this.provider);
