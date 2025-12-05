@@ -1,0 +1,140 @@
+import { useState, useEffect } from 'react';
+import { zoro, Provider } from '@openvector/zoro-sdk';
+import './App.css';
+
+function App() {
+  const [provider, setProvider] = useState(null);
+  const [status, setStatus] = useState({ text: 'Not connected', connected: false });
+  const [result, setResult] = useState(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+
+  useEffect(() => {
+    // Initialize the SDK
+    zoro.init({
+      appName: 'Zoro SDK Demo',
+      network: 'mainnet',
+      onAccept: (provider) => {
+        console.log('Connected!', provider);
+        setProvider(provider);
+        setStatus({ text: 'Connected', connected: true });
+        setIsConnecting(false);
+      },
+      onReject: () => {
+        console.log('Connection rejected');
+        setStatus({ text: 'Connection rejected', connected: false });
+        setIsConnecting(false);
+      }
+    });
+  }, []);
+
+  const handleConnect = async () => {
+    try {
+      setIsConnecting(true);
+      setStatus({ text: 'Connecting...', connected: false });
+      await zoro.connect();
+    } catch (error) {
+      console.error('Connection error:', error);
+      setStatus({ text: `Error: ${error.message}`, connected: false });
+      setIsConnecting(false);
+    }
+  };
+
+  const handleDisconnect = () => {
+    localStorage.removeItem('zoro_connect');
+    if (zoro.connection?.ws) {
+      zoro.connection.ws.close();
+    }
+    zoro.provider = null;
+    setProvider(null);
+    setStatus({ text: 'Disconnected', connected: false });
+    setResult(null);
+  };
+
+  const handleGetHolding = async () => {
+    if (!provider) {
+      setResult({ title: 'Error', data: 'Not connected' });
+      return;
+    }
+
+    try {
+      const holding = await provider.getHolding();
+      setResult({ title: 'Holding', data: holding });
+    } catch (error) {
+      setResult({ title: 'Error', data: error.message });
+    }
+  };
+
+  const handleGetActiveContracts = async () => {
+    if (!provider) {
+      setResult({ title: 'Error', data: 'Not connected' });
+      return;
+    }
+
+    try {
+      const contracts = await provider.getActiveContracts();
+      setResult({ title: 'Active Contracts', data: contracts });
+    } catch (error) {
+      setResult({ title: 'Error', data: error.message });
+    }
+  };
+
+  const handleSignMessage = () => {
+    if (!provider) {
+      setResult({ title: 'Error', data: 'Not connected' });
+      return;
+    }
+
+    const message = prompt('Enter message to sign:');
+    if (!message) return;
+
+    provider.signMessage(message, (signature) => {
+      setResult({ title: 'Signature', data: signature });
+    });
+  };
+
+  return (
+    <div className="app">
+      <div className="container">
+        <h1>Zoro SDK Demo</h1>
+        
+        <div className={`status ${status.connected ? 'connected' : ''} ${status.text.includes('Error') ? 'error' : ''}`}>
+          <strong>Status:</strong> <span>{status.text}</span>
+        </div>
+
+        <div className="buttons">
+          <button 
+            onClick={handleConnect} 
+            disabled={status.connected || isConnecting}
+          >
+            {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+          </button>
+          <button 
+            onClick={handleDisconnect} 
+            disabled={!status.connected}
+          >
+            Disconnect
+          </button>
+        </div>
+
+        {status.connected && (
+          <div className="actions">
+            <h2>Actions</h2>
+            <button onClick={handleGetHolding}>Get Holding</button>
+            <button onClick={handleGetActiveContracts}>Get Active Contracts</button>
+            <button onClick={handleSignMessage}>Sign Message</button>
+          </div>
+        )}
+
+        {result && (
+          <div className="result">
+            <h3>{result.title}</h3>
+            <pre>{typeof result.data === 'string' ? result.data : JSON.stringify(result.data, null, 2)}</pre>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
