@@ -1,0 +1,33 @@
+# Source files
+src/
+build.js
+tsconfig.json
+
+# Development files
+*.test.ts
+*.spec.ts
+.vscode/
+.idea/
+
+# Build artifacts (keep dist/)
+*.tsbuildinfo
+
+# Demo
+demo/
+
+# Git
+.git/
+.gitignore
+
+# Documentation (keep README.md)
+CHANGELOG.md
+LICENSE
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Environment
+.env
+.env.*
+

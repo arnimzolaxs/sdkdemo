@@ -1,0 +1,72 @@
+# Zoro SDK
+
+TypeScript SDK package for client-side applications.
+
+## Project Structure
+
+```
+zoro_sdk/
+├── packages/
+│   └── zoro-sdk/          # Main package
+└── demo/                  # Demo web app
+```
+
+## Development
+
+### Install Dependencies
+
+This project uses [pnpm](https://pnpm.io/) for package management. Install pnpm first if you haven't:
+
+```bash
+npm install -g pnpm
+```
+
+Then install dependencies:
+
+```bash
+pnpm install
+```
+
+### Build Package
+
+```bash
+pnpm run build
+```
+
+This will build the package in `packages/zoro-sdk/dist/` with both ESM and CommonJS outputs.
+
+### Run Demo
+
+```bash
+pnpm run dev
+```
+
+This will start the demo app at `http://localhost:3000`.
+
+## Package Usage
+
+```typescript
+import { zoro } from '@openvector/zoro-sdk';
+
+zoro.init({
+  appName: 'My App',
+  network: 'mainnet',
+  onAccept: (provider) => {
+    console.log('Connected!', provider);
+  }
+});
+
+await zoro.connect();
+```
+
+## Publishing
+
+Only the `packages/zoro-sdk` directory will be published to npm. The `demo/` directory is excluded.
+
+To publish:
+
+```bash
+cd packages/zoro-sdk
+npm publish
+```
+

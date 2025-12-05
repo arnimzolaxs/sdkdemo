@@ -1,0 +1,14 @@
+{
+  "name": "zoro-sdk-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Workspace for @openvector/zoro-sdk package",
+  "scripts": {
+    "build": "pnpm --filter @openvector/zoro-sdk build",
+    "dev": "pnpm --filter zoro-sdk-demo dev"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
+

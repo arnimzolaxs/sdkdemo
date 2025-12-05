@@ -1,0 +1,48 @@
+{
+  "name": "@openvector/zoro-sdk",
+  "version": "0.0.1",
+  "description": "Zoro SDK for client-side applications to connect to Zoro Wallet",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "node build.js && tsc --emitDeclarationOnly --project tsconfig.json",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "zoro",
+    "sdk",
+    "client"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "qrcode": "^1.5.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "esbuild": "^0.19.11",
+    "@types/qrcode": "^1.5.5"
+  },
+  "peerDependencies": {},
+  "peerDependenciesMeta": {}
+}
+
