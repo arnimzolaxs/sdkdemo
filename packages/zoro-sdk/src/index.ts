@@ -2,6 +2,7 @@ import QRCode from 'qrcode';
 import { Connection } from './connection';
 import { Provider } from './provider';
 import { generateRequestId } from './provider';
+import { MessageType } from './types';
 
 export * from './types';
 export * from './connection';
@@ -159,9 +160,8 @@ export class ZoroSDK {
   handleWebSocketMessage(event: MessageEvent) {
     console.log("[ZoroSDK] WS message received:", event.data);
     const message = JSON.parse(event.data);
-    console.log("[ZoroSDK] WS message parsed:", message);
 
-    if (message.type === "connection:approved") {
+    if (message.type === MessageType.HANDSHAKE_ACCEPT) {
       console.log("[ZoroSDK] Entering HANDSHAKE_ACCEPT flow");
       
       const { authToken, partyId, publicKey, email } = message.data || {};
@@ -200,7 +200,7 @@ export class ZoroSDK {
           }
         }
       }
-    } else if (message.type === "connection:rejected") {
+    } else if (message.type === MessageType.HANDSHAKE_REJECT) {
       console.log("[ZoroSDK] Entering HANDSHAKE_REJECT flow");
       
       localStorage.removeItem("zoro_connect");
@@ -213,8 +213,8 @@ export class ZoroSDK {
         this.popupWindow.close();
       }
       this.popupWindow = null;
-    } else if (message.type === "signing:approved" || message.type === "signing:rejected") {
-      this.provider?.handleResponse(message);
+    } else if (this.provider && (message.type === MessageType.SIGN_REQUEST_APPROVED || message.type === MessageType.SIGN_REQUEST_REJECTED)) {
+      this.provider.handleResponse(message);
     }
   }
 

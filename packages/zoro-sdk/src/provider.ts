@@ -1,5 +1,6 @@
 import { Connection } from './connection';
 import { RequestTimeoutError, RejectRequestError } from './errors';
+import { MessageType, SigningRequestType } from './types';
 
 export function generateUUID(): string {
   return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => {
@@ -92,16 +93,16 @@ export class Provider {
   }
 
   // async submitTransaction(payload: any) {
-  //   return this.sendRequest("transaction", { txn: payload }, undefined);
+  //   return this.sendRequest(SigningRequestType.SIGN_TRANSACTION, { txn: payload }, undefined);
   // }
 
   signMessage(message: string, onResponse?: (signature: any) => void) {
-    this.sendRequest("rawMessage", { message }, onResponse);
+    this.sendRequest(SigningRequestType.SIGN_RAW_MESSAGE, { message }, onResponse);
   }
 
   sendRequest(
-    messageType: string,
-    params: any = {},
+    requestType: SigningRequestType,
+    payload: any = {},
     onResponse?: (response: any) => void
   ) {
     if (!this.connection.ws || this.connection.ws.readyState !== WebSocket.OPEN) {
@@ -112,18 +113,16 @@ export class Provider {
 
     this.connection.ws.send(JSON.stringify({
       requestId: requestId,
-      type: "signing:request",
+      type: MessageType.SIGN_REQUEST,
       data: {
-        messageType: messageType,
-        payload: params
+        requestType,
+        payload
       }
     }));
 
     if (onResponse) {
       this.requests.set(requestId, onResponse);
     }
-
-    console.log("Sent signing request:", requestId);
 
     if (this.openWallet) {
       const url = new URL("/connect/sign", this.connection.walletUrl);
