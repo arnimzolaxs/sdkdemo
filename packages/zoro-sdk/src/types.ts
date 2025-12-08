@@ -12,3 +12,39 @@ export enum SigningRequestType {
   SIGN_RAW_MESSAGE = "sign_raw_message",
   SIGN_TRANSACTION = "sign_transaction",
 }
+
+export interface WebSocketMessage {
+  type: MessageType;
+  requestId?: string;
+  data?: {
+    requestType?: SigningRequestType;
+    payload?: any;
+    reason?: string;
+    signature?: string;
+    [key: string]: any;
+  };
+}
+
+// response types for the application to handle
+export enum SignRequestResponseType {
+  SIGN_REQUEST_APPROVED = "sign_request_approved",
+  SIGN_REQUEST_REJECTED = "sign_request_rejected",
+  SIGN_REQUEST_ERROR = "sign_request_error"
+}
+
+export interface SignRequestApprovedResponse {
+  signature: string;
+}
+
+export interface SignRequestRejectedResponse {
+  reason?: string;
+}
+
+export interface SignRequestErrorResponse {
+  error: string;
+}
+
+export interface SignRequestResponse {
+  type: SignRequestResponseType;
+  data: SignRequestApprovedResponse | SignRequestRejectedResponse | SignRequestErrorResponse;
+}

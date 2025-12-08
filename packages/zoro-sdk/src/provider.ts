@@ -1,6 +1,6 @@
 import { Connection } from './connection';
 import { RequestTimeoutError, RejectRequestError } from './errors';
-import { MessageType, SigningRequestType } from './types';
+import { MessageType, SigningRequestType, SignRequestResponse, WebSocketMessage } from './types';
 
 export function generateUUID(): string {
   return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => {
@@ -30,7 +30,7 @@ export class Provider {
   public_key: string;
   email?: string;
   auth_token: string;
-  requests = new Map<string, (response: any) => void>();
+  requests = new Map<string, (response: SignRequestResponse) => void>();
   requestTimeout = 30000;
   openWallet: ((url: string) => void) | null = null;
   walletUrl: string | null = null;
@@ -68,13 +68,16 @@ export class Provider {
     this.walletUrl = walletUrl || null;
   }
 
-  handleResponse(message: any) {
+  handleResponse(message: WebSocketMessage) {
     console.log("Received response:", message);
     
     if (message.requestId && this.requests.has(message.requestId)) {
       const onResponse = this.requests.get(message.requestId);
       if (onResponse) {
-        onResponse(message.data?.signature);
+        onResponse({
+          type: message.type as any,
+          data: message.data as any
+        });
         this.requests.delete(message.requestId);
       } else {
         console.error("No onResponse function found for requestId:", message.requestId);

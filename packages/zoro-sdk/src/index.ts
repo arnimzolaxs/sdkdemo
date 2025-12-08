@@ -4,12 +4,14 @@ import { Provider } from './provider';
 import { generateRequestId } from './provider';
 import { MessageType } from './types';
 
-export * from './types';
-export * from './connection';
-export * from './provider';
-export * from './errors';
 
-export { MessageType } from './types';
+export {
+  SignRequestResponseType,
+  type SignRequestApprovedResponse,
+  type SignRequestRejectedResponse,
+  type SignRequestErrorResponse,
+  type SignRequestResponse
+} from './types';
 
 // Main SDK class
 export class ZoroSDK {

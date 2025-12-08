@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { zoro, Provider } from '@openvector/zoro-sdk';
+import { zoro, SignRequestResponseType} from '@openvector/zoro-sdk';
 import './App.css';
 
 function App() {
@@ -89,8 +89,21 @@ function App() {
     const message = prompt('Enter message to sign:');
     if (!message) return;
 
-    provider.signMessage(message, (signature) => {
-      setResult({ title: 'Signature', data: signature });
+    provider.signMessage(message, (response) => {
+      switch (response.type) {
+        case SignRequestResponseType.SIGN_REQUEST_APPROVED:
+          setResult({ title: 'Signature', data: response.data.signature });
+          break;
+        case SignRequestResponseType.SIGN_REQUEST_REJECTED:
+          setResult({ title: 'Error', data: "Request rejected by the wallet" });
+          break;
+        case SignRequestResponseType.SIGN_REQUEST_ERROR:
+          setResult({ title: 'Error', data: response.data.error });
+          break;
+        default:
+          setResult({ title: 'Error', data: 'Unknown response type' });
+          break;
+      }
     });
   };
 
