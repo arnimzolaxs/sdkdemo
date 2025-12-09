@@ -24,6 +24,13 @@ function App() {
         setStatus({ text: 'Connection rejected', connected: false });
         setIsConnecting(false);
       },
+      onDisconnect: () => {
+        console.log('Disconnected');
+        setStatus({ text: 'Disconnected', connected: false });
+        setIsConnecting(false);
+        setProvider(null);
+        setResult(null);
+      },
       walletUrl: 'http://localhost:8081',
       apiUrl: 'http://localhost:1337'
     });
@@ -42,11 +49,7 @@ function App() {
   };
 
   const handleDisconnect = () => {
-    localStorage.removeItem('zoro_connect');
-    if (zoro.connection?.ws) {
-      zoro.connection.ws.close();
-    }
-    zoro.provider = null;
+    zoro.disconnect();
     setProvider(null);
     setStatus({ text: 'Disconnected', connected: false });
     setResult(null);

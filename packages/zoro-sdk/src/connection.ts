@@ -133,7 +133,7 @@ export class Connection {
     return `${protocol}://${baseUrl}/connect/ws?ticketId=${ticketId}`;
   }
 
-  connectWebSocket(ticketId: string, onMessage: (event: MessageEvent) => void) {
+  connectWebSocket(ticketId: string, onMessage: (event: MessageEvent) => void, onDisconnect: () => void) {
     const wsUrl = this.websocketUrl(ticketId);
     this.ws = new WebSocket(wsUrl);
 
@@ -141,8 +141,17 @@ export class Connection {
     this.ws.onopen = () => {
       console.log("Connected to ticket server.");
     };
-    this.ws.onclose = () => {
-      console.log("Disconnected from ticket server.");
+    this.ws.onclose = (event: CloseEvent) => {
+      console.log("Disconnected from ticket server.", event);
+      if (event.code === 1000) {
+        console.log("Disconnected from ticket server gracefully.");
+        onDisconnect();
+      } else {
+        console.log("Disconnected from ticket server unexpectedly.");
+        onDisconnect();
+      }
+      this.ws?.close();
+      this.ws = null;
     };
   }
 }

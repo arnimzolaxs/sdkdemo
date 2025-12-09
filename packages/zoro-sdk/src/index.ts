@@ -24,6 +24,7 @@ export class ZoroSDK {
   redirectUrl?: string;
   onAccept: ((provider: Provider) => void) | null = null;
   onReject: (() => void) | null = null;
+  onDisconnect: (() => void) | null = null;
   overlay: HTMLElement | null = null;
   ticketId: string | null = null;
 
@@ -46,7 +47,7 @@ export class ZoroSDK {
     onReject?: () => void;
     options?: {
       openMode?: string;
-      redirectUrl?: string;
+      // redirectUrl?: string;
     };
   }) {
     this.appName = appName;
@@ -99,7 +100,7 @@ export class ZoroSDK {
               this.onAccept?.(this.provider);
               
               if (ticketId) {
-                this.connection.connectWebSocket(ticketId, this.handleWebSocketMessage.bind(this));
+                this.connection.connectWebSocket(ticketId, this.handleWebSocketMessage.bind(this), this.handleDisconnect.bind(this));
               }
               
               return;
@@ -126,7 +127,7 @@ export class ZoroSDK {
           
           const connectUrl = url.toString();
           this.showQrCode(connectUrl);
-          this.connection.connectWebSocket(ticketId, this.handleWebSocketMessage.bind(this));
+          this.connection.connectWebSocket(ticketId, this.handleWebSocketMessage.bind(this), this.handleDisconnect.bind(this));
           return;
         }
       } catch (error) {
@@ -152,11 +153,15 @@ export class ZoroSDK {
       
       const connectUrl = url.toString();
       this.showQrCode(connectUrl);
-      this.connection.connectWebSocket(ticketId, this.handleWebSocketMessage.bind(this));
+      this.connection.connectWebSocket(ticketId, this.handleWebSocketMessage.bind(this), this.handleDisconnect.bind(this));
     } catch (error) {
       console.error(error);
       return;
     }
+  }
+
+  disconnect() {
+    this.handleDisconnect(false);
   }
 
   handleWebSocketMessage(event: MessageEvent) {
@@ -193,7 +198,7 @@ export class ZoroSDK {
             this.onAccept?.(this.provider);
             this.hideQrCode();
             
-            this.connection?.connectWebSocket(connectionInfo.ticketId, this.handleWebSocketMessage.bind(this));
+            this.connection?.connectWebSocket(connectionInfo.ticketId, this.handleWebSocketMessage.bind(this), this.handleDisconnect.bind(this));
             
             console.log("[ZoroSDK] HANDSHAKE_ACCEPT: closing popup (if exists)");
             this.popupWindow = null;
@@ -215,9 +220,36 @@ export class ZoroSDK {
         this.popupWindow.close();
       }
       this.popupWindow = null;
-    } else if (this.provider && (message.type === MessageType.SIGN_REQUEST_APPROVED || message.type === MessageType.SIGN_REQUEST_REJECTED)) {
-      this.provider.handleResponse(message);
+    } else if (message.type === MessageType.HANDSHAKE_DISCONNECT) {
+      console.log("[ZoroSDK] Entering HANDSHAKE_DISCONNECT flow");
+      console.log("message", message);
+      this.handleDisconnect();
     }
+    else if (this.provider && (message.type === MessageType.SIGN_REQUEST_APPROVED || message.type === MessageType.SIGN_REQUEST_REJECTED || message.type === MessageType.SIGN_REQUEST_ERROR)) {
+      this.provider.handleResponse(message);
+    } else {
+      console.warn("[ZoroSDK] Unknown message type:", message.type);
+    }
+  }
+
+  handleDisconnect(isClosedByWallet: boolean = true) {
+    localStorage.removeItem("zoro_connect");
+    if (this.connection?.ws) {
+      this.connection.ws.close();
+    }
+    if (isClosedByWallet) {
+      this.onDisconnect?.();
+    }
+    
+    this.hideQrCode();
+
+    console.log("[ZoroSDK] HANDSHAKE_DISCONNECT: closing popup (if exists)");
+    if (this.popupWindow && !this.popupWindow.closed) {
+      this.popupWindow.close();
+    }
+    this.popupWindow = null;
+    this.provider = null;
+    this.ticketId = null;
   }
 
   openWallet(url: string) {
