@@ -80,28 +80,25 @@ export class ZoroSDK {
     if (existingConnectionRaw) {
       try {
         let canReuseTicket = true;
-        const { ticketId, authToken, partyId, publicKey, email } = JSON.parse(existingConnectionRaw);
+        const { ticketId, authToken, partyId, publicKey } = JSON.parse(existingConnectionRaw);
         
-        if (authToken && partyId && publicKey) {
+        if (ticketId && authToken && partyId && publicKey) {
           try {
-            const verifiedAccount = await this.connection.verifySession(authToken);
+            const verifiedAccount = await this.connection.verifySession(ticketId, authToken);
             
-            if (verifiedAccount.party_id === partyId) {
+            if (verifiedAccount.partyId === partyId && verifiedAccount.publicKey === publicKey) {
               this.provider = new Provider({
                 connection: this.connection,
-                party_id: partyId,
-                auth_token: authToken,
-                public_key: publicKey,
-                email,
+                partyId,
+                authToken,
+                publicKey,
                 openWallet: this.openWallet.bind(this),
                 walletUrl: this.connection!.walletUrl
               });
               
               this.onAccept?.(this.provider);
               
-              if (ticketId) {
-                this.connection.connectWebSocket(ticketId, this.handleWebSocketMessage.bind(this), this.handleDisconnect.bind(this));
-              }
+              this.connection.connectWebSocket(ticketId, this.handleWebSocketMessage.bind(this), this.handleDisconnect.bind(this));
               
               return;
             } else {
@@ -176,10 +173,9 @@ export class ZoroSDK {
       if (authToken && partyId && publicKey) {
         this.provider = new Provider({
           connection: this.connection!,
-          party_id: partyId,
-          auth_token: authToken,
-          public_key: publicKey,
-          email,
+          partyId,
+          authToken,
+          publicKey,
           openWallet: this.openWallet.bind(this),
           walletUrl: this.connection!.walletUrl
         });
@@ -240,7 +236,7 @@ export class ZoroSDK {
     if (isClosedByWallet) {
       this.onDisconnect?.();
     }
-    
+
     this.hideQrCode();
 
     console.log("[ZoroSDK] HANDSHAKE_DISCONNECT: closing popup (if exists)");

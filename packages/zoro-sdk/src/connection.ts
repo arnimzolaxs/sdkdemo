@@ -97,8 +97,8 @@ export class Connection {
     return response.json();
   }
 
-  async verifySession(authToken: string) {
-    const response = await fetch(`${this.apiUrl}/api/v1/connect/account`, {
+  async verifySession(ticketId: string, authToken: string) {
+    const response = await fetch(`${this.apiUrl}/api/v1/connect/ticket/${ticketId}/verify`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -111,20 +111,18 @@ export class Connection {
     }
 
     const data = await response.json();
-    const email = data?.email;
 
-    if (!data?.party_id || !data?.public_key) {
+    if (!data?.partyId || !data?.publicKey) {
       throw new Error("Invalid session verification response.");
     }
 
-    const account = {
-      party_id: data?.party_id,
-      auth_token: authToken,
-      public_key: data?.public_key,
-      email
+    const verifiedAccount = {
+      partyId: data.partyId,
+      publicKey: data.publicKey,
+      authToken,
     };
 
-    return account;
+    return verifiedAccount;
   }
 
   websocketUrl(ticketId: string): string {

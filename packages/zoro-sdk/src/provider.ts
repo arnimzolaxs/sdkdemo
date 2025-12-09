@@ -26,10 +26,10 @@ export function generateRequestId(): string {
 
 export class Provider {
   connection: Connection;
-  party_id: string;
-  public_key: string;
+  partyId: string;
+  publicKey: string;
   email?: string;
-  auth_token: string;
+  authToken: string;
   requests = new Map<string, (response: SignRequestResponse) => void>();
   requestTimeout = 30000;
   openWallet: ((url: string) => void) | null = null;
@@ -37,18 +37,18 @@ export class Provider {
 
   constructor({
     connection,
-    party_id,
-    public_key,
-    auth_token,
+    partyId,
+    publicKey,
+    authToken,
     email,
     requestTimeout,
     openWallet,
     walletUrl
   }: {
     connection: Connection;
-    party_id: string;
-    public_key: string;
-    auth_token: string;
+    partyId: string;
+    publicKey: string;
+    authToken: string;
     email?: string;
     requestTimeout?: number;
     openWallet?: (url: string) => void;
@@ -59,10 +59,10 @@ export class Provider {
     }
 
     this.connection = connection;
-    this.party_id = party_id;
-    this.public_key = public_key;
+    this.partyId = partyId;
+    this.publicKey = publicKey;
     this.email = email;
-    this.auth_token = auth_token;
+    this.authToken = authToken;
     this.requestTimeout = requestTimeout || 30000;
     this.openWallet = openWallet || null;
     this.walletUrl = walletUrl || null;
@@ -88,11 +88,11 @@ export class Provider {
   }
 
   async getHolding() {
-    return this.connection.getHolding(this.auth_token);
+    return this.connection.getHolding(this.authToken);
   }
 
   async getActiveContracts(params?: { templateId?: string; interfaceId?: string }) {
-    return this.connection.getActiveContracts(this.auth_token, params);
+    return this.connection.getActiveContracts(this.authToken, params);
   }
 
   // async submitTransaction(payload: any) {
