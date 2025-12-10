@@ -95,6 +95,10 @@ export class Provider {
     return this.connection.getPendingTransactions(this.authToken);
   }
 
+  async getHoldingUtxos() {
+    return this.connection.getHoldingUtxos(this.authToken);
+  }
+
   async getActiveContractsByInterfaceId(interfaceId: string) {
     return this.connection.getActiveContracts(this.authToken, { interfaceId });
   }

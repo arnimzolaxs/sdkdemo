@@ -84,6 +84,22 @@ export class Connection {
     return response.json();
   }
 
+  async getHoldingUtxos(authToken: string) {
+    const response = await fetch(`${this.apiUrl}/api/v1/connect/wallet/holding-utxos`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to get holding utxos.");
+    }
+
+    return response.json();
+  }
+
   async getActiveContracts(authToken: string, params?: {
     templateId?: string;
     interfaceId?: string;
