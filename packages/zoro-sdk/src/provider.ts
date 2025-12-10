@@ -1,6 +1,6 @@
 import { Connection } from './connection';
 import { RequestTimeoutError, RejectRequestError } from './errors';
-import { CreateTransferCommandParams, MessageType, SigningRequestType, SignRequestResponse, TransactionCommand, WebSocketMessage } from './types';
+import { CreateTransactionChoiceCommandParams, CreateTransferCommandParams, MessageType, SigningRequestType, SignRequestResponse, TransactionCommand, WebSocketMessage } from './types';
 
 export function generateUUID(): string {
   return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => {
@@ -109,6 +109,10 @@ export class Provider {
 
   async createTransferCommand(params: CreateTransferCommandParams): Promise<TransactionCommand> {
     return this.connection.createTransferCommand(this.authToken, params);
+  }
+
+  async createTransactionChoiceCommand(params: CreateTransactionChoiceCommandParams): Promise<TransactionCommand> {
+    return this.connection.createTransactionChoiceCommand(this.authToken, params);
   }
 
   // async submitTransaction(payload: any) {

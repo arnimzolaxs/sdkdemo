@@ -62,6 +62,14 @@ export interface CreateTransferCommandParams {
   expiryDate?: string; // ISO Date String, will default to 24 hours from now
 }
 
+export type TransactionInstructionChoice = 'Accept' | 'Reject' | 'Withdraw';
+
+export interface CreateTransactionChoiceCommandParams {
+  transferContractId: string;
+  choice: TransactionInstructionChoice;
+  instrument: Instrument;
+}
+
 export interface TransactionCommand {
   command: any;
   disclosedContracts: any[];

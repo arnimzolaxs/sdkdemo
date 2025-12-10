@@ -1,4 +1,4 @@
-import { CreateTransferCommandParams } from "./types";
+import { CreateTransactionChoiceCommandParams, CreateTransferCommandParams } from "./types";
 
 export class Connection {
   walletUrl = "https://zorowallet.com";
@@ -162,6 +162,23 @@ export class Connection {
 
     if (!response.ok) {
       throw new Error("Failed to create transfer command.");
+    }
+
+    return response.json();
+  }
+
+  async createTransactionChoiceCommand(authToken: string, params: CreateTransactionChoiceCommandParams) {
+    const response = await fetch(`${this.apiUrl}/api/v1/connect/wallet/create-choice-command`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`
+      },
+      body: JSON.stringify(params)
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to create transaction choice command.");
     }
 
     return response.json();
