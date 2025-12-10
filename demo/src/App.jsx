@@ -96,6 +96,53 @@ function App() {
     });
   };
 
+  const handleCreateTransferCommand = async () => {
+    if (!provider) {
+      setResult({ title: 'Error', data: 'Not connected' });
+      return;
+    }
+
+    const transferCommand = await provider.createTransferCommand({
+      receiverPartyId: 'receiverPartyId',
+      amount: '10',
+      instrument: {
+        id: 'Amulet',
+        admin: 'DSO::1220b1431ef217342db44d516bb9befde802be7d8899637d290895fa58880f19accc'
+      },
+      memo: 'Demo dapp transfer',
+    });
+    setResult({ title: 'Transfer Command', data: { transferCommand } });
+  };
+
+  const handleSubmitTransactionCommand = async () => {
+    if (!provider) {
+      setResult({ title: 'Error', data: 'Not connected' });
+      return;
+    }
+
+    if (!result.data.transferCommand) {
+      setResult({ title: 'Error', data: 'No transfer command found' });
+      return;
+    }
+
+    provider.submitTransactionCommand(result.data.transferCommand, (response) => {
+      switch (response.type) {
+        case SignRequestResponseType.SIGN_REQUEST_APPROVED:
+          setResult({ title: 'updateId', data: response.data.updateId });
+          break;
+        case SignRequestResponseType.SIGN_REQUEST_REJECTED:
+          setResult({ title: 'Error', data: "Request rejected by the wallet" });
+          break;
+        case SignRequestResponseType.SIGN_REQUEST_ERROR:
+          setResult({ title: 'Error', data: response.data.error });
+          break;
+        default:
+          setResult({ title: 'Error', data: 'Unknown response type' });
+          break;
+      }
+    });
+  };
+
   return (
     <div className="app">
       <div className="container">
@@ -125,6 +172,9 @@ function App() {
             <h2>Actions</h2>
             <button onClick={handleGetHoldingTransactions}>Get Holding Transactions</button>
             <button onClick={handleSignMessage}>Sign Message</button>
+            <button onClick={handleCreateTransferCommand}>Create Transfer Command</button>
+            {/* <button onClick={handleCreateTransactionChoiceCommand}>Create Transaction Choice Command</button> */}
+            <button onClick={handleSubmitTransactionCommand}>Submit Transaction Command</button>
           </div>
         )}
 

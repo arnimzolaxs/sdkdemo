@@ -115,7 +115,7 @@ export class Provider {
     return this.connection.createTransactionChoiceCommand(this.authToken, params);
   }
 
-  async submitTransactionCommand(transactionCommand: TransactionCommand, onResponse: (response: SignRequestResponse) => void) {
+  submitTransactionCommand(transactionCommand: TransactionCommand, onResponse: (response: SignRequestResponse) => void) {
     return this.sendRequest(SigningRequestType.SUBMIT_TRANSACTION, { transactionCommand }, onResponse);
   }
 
