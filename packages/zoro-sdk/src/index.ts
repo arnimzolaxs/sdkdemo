@@ -38,7 +38,7 @@ export class ZoroSDK {
     apiUrl,
     onAccept,
     onReject,
-    options,
+    onDisconnect,
   }: {
     appName: string;
     network?: string;
@@ -46,19 +46,16 @@ export class ZoroSDK {
     apiUrl?: string;
     onAccept?: (wallet: Wallet) => void;
     onReject?: () => void;
-    options?: {
-      openMode?: string;
-      // redirectUrl?: string;
-    };
+    onDisconnect?: () => void;
   }) {
     this.appName = appName;
     this.onAccept = onAccept || null;
     this.onReject = onReject || null;
+    this.onDisconnect = onDisconnect || null;
 
     const resolvedOptions = {
       openMode: "popup",
       redirectUrl: undefined,
-      ...(options ?? {}),
     };
 
     this.openMode = resolvedOptions.openMode;
@@ -103,8 +100,8 @@ export class ZoroSDK {
                 partyId,
                 authToken,
                 publicKey,
-                openWallet: this.openWallet.bind(this),
-                walletUrl: this.connection!.walletUrl,
+                openWalletForRequest: this.openWalletForRequest.bind(this),
+                closePopup: this.closePopup.bind(this),
               });
 
               this.onAccept?.(this.wallet);
@@ -214,8 +211,8 @@ export class ZoroSDK {
           partyId,
           authToken,
           publicKey,
-          openWallet: this.openWallet.bind(this),
-          walletUrl: this.connection!.walletUrl,
+          openWalletForRequest: this.openWalletForRequest.bind(this),
+          closePopup: this.closePopup.bind(this),
         });
 
         const connectionInfoRaw = localStorage.getItem("zoro_connect");
@@ -241,10 +238,7 @@ export class ZoroSDK {
               this.handleDisconnect.bind(this)
             );
 
-            console.log(
-              "[ZoroSDK] HANDSHAKE_ACCEPT: closing popup (if exists)"
-            );
-            this.popupWindow = null;
+            this.closePopup();
           } catch (error) {
             console.error(
               "Failed to update local storage with auth token.",
@@ -261,11 +255,7 @@ export class ZoroSDK {
       this.onReject?.();
       this.hideQrCode();
 
-      console.log("[ZoroSDK] HANDSHAKE_REJECT: closing popup (if exists)");
-      if (this.popupWindow && !this.popupWindow.closed) {
-        this.popupWindow.close();
-      }
-      this.popupWindow = null;
+      this.closePopup();
     } else if (message.type === MessageType.HANDSHAKE_DISCONNECT) {
       console.log("[ZoroSDK] Entering HANDSHAKE_DISCONNECT flow");
       console.log("message", message);
@@ -339,6 +329,20 @@ export class ZoroSDK {
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
+  openWalletForRequest(requestId: string) {
+    if (!this.ticketId) {
+      throw new Error("Ticket ID is not set. Call connect() first.");
+    }
+    if (!this.connection) {
+      throw new Error("Connection is not set. Call init() first.");
+    }
+
+    const url = new URL("/connect", this.connection.walletUrl);
+    url.searchParams.append("ticketId", this.ticketId);
+    url.searchParams.append("requestId", requestId);
+    this.openWallet(url.toString());
+  }
+
   showQrCode(url: string) {
     if (typeof window === "undefined" || typeof document === "undefined") {
       return;
@@ -404,6 +408,14 @@ export class ZoroSDK {
       this.overlay.parentElement.removeChild(this.overlay);
       this.overlay = null;
     }
+  }
+
+  closePopup() {
+    console.log("closing popup (if exists)");
+    if (this.popupWindow && !this.popupWindow.closed) {
+      this.popupWindow.close();
+    }
+    this.popupWindow = null;
   }
 }
 

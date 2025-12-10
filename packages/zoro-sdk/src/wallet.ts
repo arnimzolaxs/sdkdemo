@@ -18,8 +18,8 @@ export class Wallet {
   authToken: string;
   requests = new Map<string, (response: SignRequestResponse) => void>();
   requestTimeout = 30000;
-  openWallet: ((url: string) => void) | null = null;
-  walletUrl: string | null = null;
+  openWalletForRequest: ((requestId: string) => void) | null = null;
+  closePopup: (() => void) | null = null;
 
   constructor({
     connection,
@@ -28,8 +28,8 @@ export class Wallet {
     authToken,
     email,
     requestTimeout,
-    openWallet,
-    walletUrl,
+    openWalletForRequest,
+    closePopup,
   }: {
     connection: Connection;
     partyId: string;
@@ -37,8 +37,8 @@ export class Wallet {
     authToken: string;
     email?: string;
     requestTimeout?: number;
-    openWallet?: (url: string) => void;
-    walletUrl?: string;
+    openWalletForRequest?: (requestId: string) => void;
+    closePopup?: () => void;
   }) {
     if (!connection) {
       throw new Error("Provider requires a connection object.");
@@ -49,9 +49,9 @@ export class Wallet {
     this.publicKey = publicKey;
     this.email = email;
     this.authToken = authToken;
-    this.requestTimeout = requestTimeout || 30000;
-    this.openWallet = openWallet || null;
-    this.walletUrl = walletUrl || null;
+    this.requestTimeout = requestTimeout ?? 30000;
+    this.openWalletForRequest = openWalletForRequest ?? null;
+    this.closePopup = closePopup ?? null;
   }
 
   handleResponse(message: WebSocketMessage) {
@@ -70,6 +70,9 @@ export class Wallet {
           "No onResponse function found for requestId:",
           message.requestId
         );
+      }
+      if (this.closePopup) {
+        this.closePopup();
       }
     } else {
       console.error("No requestId found in message:", message);
@@ -163,11 +166,8 @@ export class Wallet {
 
     this.requests.set(requestId, onResponse);
 
-    if (this.openWallet) {
-      const url = new URL("/connect/sign", this.connection.walletUrl);
-      url.searchParams.set("requestId", requestId);
-      const connectUrl = url.toString();
-      this.openWallet(connectUrl);
+    if (this.openWalletForRequest) {
+      this.openWalletForRequest(requestId);
     }
   }
 }
