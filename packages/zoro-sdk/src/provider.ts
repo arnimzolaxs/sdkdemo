@@ -91,6 +91,10 @@ export class Provider {
     return this.connection.getHoldingTransactions(this.authToken);
   }
 
+  async getPendingTransactions() {
+    return this.connection.getPendingTransactions(this.authToken);
+  }
+
   async getActiveContractsByInterfaceId(interfaceId: string) {
     return this.connection.getActiveContracts(this.authToken, { interfaceId });
   }
