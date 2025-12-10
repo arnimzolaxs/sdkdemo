@@ -1,7 +1,7 @@
 import QRCode from "qrcode";
 import { Connection } from "./connection";
 import { Provider } from "./provider";
-import { generateRequestId } from "./provider";
+import { generateRequestId } from "./utils";
 import { MessageType } from "./types";
 
 export {
