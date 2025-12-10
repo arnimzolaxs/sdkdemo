@@ -37,9 +37,7 @@ await zoro.connect();
 
 ### Network Options
 
-- `mainnet` or `main` - Main network (default)
-- `testnet` or `test` - Test network
-- `devnet` or `dev` - Development network
+- `mainnet` - Main network (default)
 - `local` - Local development
 
 ### Initialization Options
@@ -53,9 +51,6 @@ zoro.init({
   onAccept?: (wallet: Wallet) => void, // Callback when connection is accepted
   onReject?: () => void,               // Callback when connection is rejected
   onDisconnect?: () => void,           // Callback when wallet disconnects
-  options?: {
-    openMode?: 'popup' | 'redirect',   // How to open wallet (default: 'popup')
-  }
 });
 ```
 

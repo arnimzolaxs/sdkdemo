@@ -58,15 +58,3 @@ zoro.init({
 
 await zoro.connect();
 ```
-
-## Publishing
-
-Only the `packages/zoro-sdk` directory will be published to npm. The `demo/` directory is excluded.
-
-To publish:
-
-```bash
-cd packages/zoro-sdk
-npm publish
-```
-
