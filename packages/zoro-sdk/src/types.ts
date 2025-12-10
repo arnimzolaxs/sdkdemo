@@ -10,7 +10,7 @@ export enum MessageType {
 
 export enum SigningRequestType {
   SIGN_RAW_MESSAGE = "sign_raw_message",
-  SIGN_TRANSACTION = "sign_transaction",
+  SUBMIT_TRANSACTION = "submit_transaction",
 }
 
 export interface WebSocketMessage {
@@ -33,7 +33,8 @@ export enum SignRequestResponseType {
 }
 
 export interface SignRequestApprovedResponse {
-  signature: string;
+  signature?: string; // in case of sign_raw_message request
+  updateId?: string; // in case of submit_transaction request
 }
 
 export interface SignRequestRejectedResponse {

@@ -115,18 +115,18 @@ export class Provider {
     return this.connection.createTransactionChoiceCommand(this.authToken, params);
   }
 
-  // async submitTransaction(payload: any) {
-  //   return this.sendRequest(SigningRequestType.SIGN_TRANSACTION, { txn: payload }, undefined);
-  // }
+  async submitTransactionCommand(transactionCommand: TransactionCommand, onResponse: (response: SignRequestResponse) => void) {
+    return this.sendRequest(SigningRequestType.SUBMIT_TRANSACTION, { transactionCommand }, onResponse);
+  }
 
-  signMessage(message: string, onResponse?: (signature: any) => void) {
+  signMessage(message: string, onResponse: (response: SignRequestResponse) => void) {
     this.sendRequest(SigningRequestType.SIGN_RAW_MESSAGE, { message }, onResponse);
   }
 
   sendRequest(
     requestType: SigningRequestType,
     payload: any = {},
-    onResponse?: (response: any) => void
+    onResponse: (response: SignRequestResponse) => void
   ) {
     if (!this.connection.ws || this.connection.ws.readyState !== WebSocket.OPEN) {
       throw new Error("Not connected.");
@@ -143,9 +143,7 @@ export class Provider {
       }
     }));
 
-    if (onResponse) {
-      this.requests.set(requestId, onResponse);
-    }
+    this.requests.set(requestId, onResponse);
 
     if (this.openWallet) {
       const url = new URL("/connect/sign", this.connection.walletUrl);
