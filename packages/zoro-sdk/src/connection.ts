@@ -1,4 +1,7 @@
-import { CreateTransactionChoiceCommandParams, CreateTransferCommandParams } from "./types";
+import {
+  CreateTransactionChoiceCommandParams,
+  CreateTransferCommandParams,
+} from "./types";
 
 export class Connection {
   walletUrl = "https://zorowallet.com";
@@ -6,7 +9,11 @@ export class Connection {
   ws: WebSocket | null = null;
   network = "main";
 
-  constructor({ network, walletUrl, apiUrl }: {
+  constructor({
+    network,
+    walletUrl,
+    apiUrl,
+  }: {
     network?: string;
     walletUrl?: string;
     apiUrl?: string;
@@ -39,12 +46,12 @@ export class Connection {
     const response = await fetch(`${this.apiUrl}/api/v1/connect/tickets`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         appName: appName,
         sessionId: sessionId,
-      })
+      }),
     });
 
     if (!response.ok) {
@@ -55,13 +62,16 @@ export class Connection {
   }
 
   async getHoldingTransactions(authToken: string) {
-    const response = await fetch(`${this.apiUrl}/api/v1/connect/wallet/holding-transactions`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken}`
+    const response = await fetch(
+      `${this.apiUrl}/api/v1/connect/wallet/holding-transactions`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
       }
-    });
+    );
 
     if (!response.ok) {
       throw new Error("Failed to get holding transactions.");
@@ -71,13 +81,16 @@ export class Connection {
   }
 
   async getPendingTransactions(authToken: string) {
-    const response = await fetch(`${this.apiUrl}/api/v1/connect/wallet/pending-transactions`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken}`
+    const response = await fetch(
+      `${this.apiUrl}/api/v1/connect/wallet/pending-transactions`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
       }
-    });
+    );
 
     if (!response.ok) {
       throw new Error("Failed to get pending transactions.");
@@ -87,13 +100,16 @@ export class Connection {
   }
 
   async getHoldingUtxos(authToken: string) {
-    const response = await fetch(`${this.apiUrl}/api/v1/connect/wallet/holding-utxos`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken}`
+    const response = await fetch(
+      `${this.apiUrl}/api/v1/connect/wallet/holding-utxos`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
       }
-    });
+    );
 
     if (!response.ok) {
       throw new Error("Failed to get holding utxos.");
@@ -102,18 +118,24 @@ export class Connection {
     return response.json();
   }
 
-  async getActiveContracts(authToken: string, params?: {
-    templateId?: string;
-    interfaceId?: string;
-  }) {
-    const response = await fetch(`${this.apiUrl}/api/v1/connect/wallet/active-contracts`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken}`
-      },
-      body: JSON.stringify(params)
-    });
+  async getActiveContracts(
+    authToken: string,
+    params?: {
+      templateId?: string;
+      interfaceId?: string;
+    }
+  ) {
+    const response = await fetch(
+      `${this.apiUrl}/api/v1/connect/wallet/active-contracts`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(params),
+      }
+    );
 
     if (!response.ok) {
       throw new Error("Failed to get active contracts.");
@@ -123,13 +145,16 @@ export class Connection {
   }
 
   async verifySession(ticketId: string, authToken: string) {
-    const response = await fetch(`${this.apiUrl}/api/v1/connect/ticket/${ticketId}/verify`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken}`
+    const response = await fetch(
+      `${this.apiUrl}/api/v1/connect/ticket/${ticketId}/verify`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
       }
-    });
+    );
 
     if (!response.ok) {
       throw new Error("Session verification failed.");
@@ -150,15 +175,21 @@ export class Connection {
     return verifiedAccount;
   }
 
-  async createTransferCommand(authToken: string, params: CreateTransferCommandParams) {
-    const response = await fetch(`${this.apiUrl}/api/v1/connect/wallet/create-transfer-command`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken}`
-      },
-      body: JSON.stringify(params)
-    });
+  async createTransferCommand(
+    authToken: string,
+    params: CreateTransferCommandParams
+  ) {
+    const response = await fetch(
+      `${this.apiUrl}/api/v1/connect/wallet/create-transfer-command`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(params),
+      }
+    );
 
     if (!response.ok) {
       throw new Error("Failed to create transfer command.");
@@ -167,15 +198,21 @@ export class Connection {
     return response.json();
   }
 
-  async createTransactionChoiceCommand(authToken: string, params: CreateTransactionChoiceCommandParams) {
-    const response = await fetch(`${this.apiUrl}/api/v1/connect/wallet/create-choice-command`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken}`
-      },
-      body: JSON.stringify(params)
-    });
+  async createTransactionChoiceCommand(
+    authToken: string,
+    params: CreateTransactionChoiceCommandParams
+  ) {
+    const response = await fetch(
+      `${this.apiUrl}/api/v1/connect/wallet/create-choice-command`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(params),
+      }
+    );
 
     if (!response.ok) {
       throw new Error("Failed to create transaction choice command.");
@@ -190,7 +227,11 @@ export class Connection {
     return `${protocol}://${baseUrl}/connect/ws?ticketId=${ticketId}`;
   }
 
-  connectWebSocket(ticketId: string, onMessage: (event: MessageEvent) => void, onDisconnect: () => void) {
+  connectWebSocket(
+    ticketId: string,
+    onMessage: (event: MessageEvent) => void,
+    onDisconnect: () => void
+  ) {
     const wsUrl = this.websocketUrl(ticketId);
     this.ws = new WebSocket(wsUrl);
 
@@ -212,4 +253,3 @@ export class Connection {
     };
   }
 }
-

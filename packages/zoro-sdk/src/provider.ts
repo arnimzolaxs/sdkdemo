@@ -1,18 +1,25 @@
-import { Connection } from './connection';
-import { RequestTimeoutError, RejectRequestError } from './errors';
-import { CreateTransactionChoiceCommandParams, CreateTransferCommandParams, MessageType, SigningRequestType, SignRequestResponse, TransactionCommand, WebSocketMessage } from './types';
+import { Connection } from "./connection";
+import {
+  CreateTransactionChoiceCommandParams,
+  CreateTransferCommandParams,
+  MessageType,
+  SigningRequestType,
+  SignRequestResponse,
+  TransactionCommand,
+  WebSocketMessage,
+} from "./types";
 
 export function generateUUID(): string {
   return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => {
     const gCrypto = globalThis.crypto;
     if (!gCrypto?.getRandomValues) {
       const n2 = Number(c);
-      return (n2 ^ Math.random() * 16 >> n2 / 4).toString(16);
+      return (n2 ^ ((Math.random() * 16) >> (n2 / 4))).toString(16);
     }
     const arr = gCrypto.getRandomValues(new Uint8Array(1));
     const byte = arr[0];
     const n = Number(c);
-    return (n ^ (byte & 15) >> n / 4).toString(16);
+    return (n ^ ((byte & 15) >> (n / 4))).toString(16);
   });
 }
 
@@ -43,7 +50,7 @@ export class Provider {
     email,
     requestTimeout,
     openWallet,
-    walletUrl
+    walletUrl,
   }: {
     connection: Connection;
     partyId: string;
@@ -70,24 +77,30 @@ export class Provider {
 
   handleResponse(message: WebSocketMessage) {
     console.log("Received response:", message);
-    
+
     if (message.requestId && this.requests.has(message.requestId)) {
       const onResponse = this.requests.get(message.requestId);
       if (onResponse) {
         onResponse({
           type: message.type as any,
-          data: message.data as any
+          data: message.data as any,
         });
         this.requests.delete(message.requestId);
       } else {
-        console.error("No onResponse function found for requestId:", message.requestId);
+        console.error(
+          "No onResponse function found for requestId:",
+          message.requestId
+        );
       }
     } else {
       console.error("No requestId found in message:", message);
     }
   }
 
-  async getHoldingTransactions(): Promise<{ transactions: any[], nextOffset: number }> {
+  async getHoldingTransactions(): Promise<{
+    transactions: any[];
+    nextOffset: number;
+  }> {
     return this.connection.getHoldingTransactions(this.authToken);
   }
 
@@ -107,20 +120,41 @@ export class Provider {
     return this.connection.getActiveContracts(this.authToken, { templateId });
   }
 
-  async createTransferCommand(params: CreateTransferCommandParams): Promise<TransactionCommand> {
+  async createTransferCommand(
+    params: CreateTransferCommandParams
+  ): Promise<TransactionCommand> {
     return this.connection.createTransferCommand(this.authToken, params);
   }
 
-  async createTransactionChoiceCommand(params: CreateTransactionChoiceCommandParams): Promise<TransactionCommand> {
-    return this.connection.createTransactionChoiceCommand(this.authToken, params);
+  async createTransactionChoiceCommand(
+    params: CreateTransactionChoiceCommandParams
+  ): Promise<TransactionCommand> {
+    return this.connection.createTransactionChoiceCommand(
+      this.authToken,
+      params
+    );
   }
 
-  submitTransactionCommand(transactionCommand: TransactionCommand, onResponse: (response: SignRequestResponse) => void) {
-    return this.sendRequest(SigningRequestType.SUBMIT_TRANSACTION, { transactionCommand: JSON.stringify(transactionCommand) }, onResponse);
+  submitTransactionCommand(
+    transactionCommand: TransactionCommand,
+    onResponse: (response: SignRequestResponse) => void
+  ) {
+    return this.sendRequest(
+      SigningRequestType.SUBMIT_TRANSACTION,
+      { transactionCommand: JSON.stringify(transactionCommand) },
+      onResponse
+    );
   }
 
-  signMessage(message: string, onResponse: (response: SignRequestResponse) => void) {
-    this.sendRequest(SigningRequestType.SIGN_RAW_MESSAGE, { message }, onResponse);
+  signMessage(
+    message: string,
+    onResponse: (response: SignRequestResponse) => void
+  ) {
+    this.sendRequest(
+      SigningRequestType.SIGN_RAW_MESSAGE,
+      { message },
+      onResponse
+    );
   }
 
   sendRequest(
@@ -128,20 +162,25 @@ export class Provider {
     payload: any = {},
     onResponse: (response: SignRequestResponse) => void
   ) {
-    if (!this.connection.ws || this.connection.ws.readyState !== WebSocket.OPEN) {
+    if (
+      !this.connection.ws ||
+      this.connection.ws.readyState !== WebSocket.OPEN
+    ) {
       throw new Error("Not connected.");
     }
 
     const requestId = generateRequestId();
 
-    this.connection.ws.send(JSON.stringify({
-      requestId: requestId,
-      type: MessageType.SIGN_REQUEST,
-      data: {
-        requestType,
-        payload
-      }
-    }));
+    this.connection.ws.send(
+      JSON.stringify({
+        requestId: requestId,
+        type: MessageType.SIGN_REQUEST,
+        data: {
+          requestType,
+          payload,
+        },
+      })
+    );
 
     this.requests.set(requestId, onResponse);
 

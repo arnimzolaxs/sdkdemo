@@ -1,9 +1,8 @@
-import QRCode from 'qrcode';
-import { Connection } from './connection';
-import { Provider } from './provider';
-import { generateRequestId } from './provider';
-import { MessageType } from './types';
-
+import QRCode from "qrcode";
+import { Connection } from "./connection";
+import { Provider } from "./provider";
+import { generateRequestId } from "./provider";
+import { MessageType } from "./types";
 
 export {
   SignRequestResponseType,
@@ -12,8 +11,8 @@ export {
   type SignRequestErrorResponse,
   type SignRequestResponse,
   type Instrument,
-  type CreateTransferCommandParams
-} from './types';
+  type CreateTransferCommandParams,
+} from "./types";
 
 // Main SDK class
 export class ZoroSDK {
@@ -39,7 +38,7 @@ export class ZoroSDK {
     apiUrl,
     onAccept,
     onReject,
-    options
+    options,
   }: {
     appName: string;
     network?: string;
@@ -59,7 +58,7 @@ export class ZoroSDK {
     const resolvedOptions = {
       openMode: "popup",
       redirectUrl: undefined,
-      ...options ?? {}
+      ...(options ?? {}),
     };
 
     this.openMode = resolvedOptions.openMode;
@@ -69,7 +68,9 @@ export class ZoroSDK {
 
   async connect() {
     if (typeof window === "undefined") {
-      console.warn("ZoroSDK.connect() can only be called in a browser environment.");
+      console.warn(
+        "ZoroSDK.connect() can only be called in a browser environment."
+      );
       return;
     }
 
@@ -78,38 +79,55 @@ export class ZoroSDK {
     }
 
     const existingConnectionRaw = localStorage.getItem("zoro_connect");
-    
+
     if (existingConnectionRaw) {
       try {
         let canReuseTicket = true;
-        const { ticketId, authToken, partyId, publicKey } = JSON.parse(existingConnectionRaw);
-        
+        const { ticketId, authToken, partyId, publicKey } = JSON.parse(
+          existingConnectionRaw
+        );
+
         if (ticketId && authToken && partyId && publicKey) {
           try {
-            const verifiedAccount = await this.connection.verifySession(ticketId, authToken);
-            
-            if (verifiedAccount.partyId === partyId && verifiedAccount.publicKey === publicKey) {
+            const verifiedAccount = await this.connection.verifySession(
+              ticketId,
+              authToken
+            );
+
+            if (
+              verifiedAccount.partyId === partyId &&
+              verifiedAccount.publicKey === publicKey
+            ) {
               this.provider = new Provider({
                 connection: this.connection,
                 partyId,
                 authToken,
                 publicKey,
                 openWallet: this.openWallet.bind(this),
-                walletUrl: this.connection!.walletUrl
+                walletUrl: this.connection!.walletUrl,
               });
-              
+
               this.onAccept?.(this.provider);
-              
-              this.connection.connectWebSocket(ticketId, this.handleWebSocketMessage.bind(this), this.handleDisconnect.bind(this));
-              
+
+              this.connection.connectWebSocket(
+                ticketId,
+                this.handleWebSocketMessage.bind(this),
+                this.handleDisconnect.bind(this)
+              );
+
               return;
             } else {
-              console.warn("[ZoroSDK] Stored partyId does not match verified account. Clearing cached session.");
+              console.warn(
+                "[ZoroSDK] Stored partyId does not match verified account. Clearing cached session."
+              );
               canReuseTicket = false;
               localStorage.removeItem("zoro_connect");
             }
           } catch (err) {
-            console.error("Auto-login failed, token is invalid. Starting new connection.", err);
+            console.error(
+              "Auto-login failed, token is invalid. Starting new connection.",
+              err
+            );
             canReuseTicket = false;
             localStorage.removeItem("zoro_connect");
           }
@@ -119,40 +137,58 @@ export class ZoroSDK {
           this.ticketId = ticketId;
           const url = new URL("/connect/", this.connection.walletUrl);
           url.searchParams.set("ticketId", ticketId);
-          
+
           if (this.redirectUrl) {
             url.searchParams.set("redirectUrl", this.redirectUrl);
           }
-          
+
           const connectUrl = url.toString();
           this.showQrCode(connectUrl);
-          this.connection.connectWebSocket(ticketId, this.handleWebSocketMessage.bind(this), this.handleDisconnect.bind(this));
+          this.connection.connectWebSocket(
+            ticketId,
+            this.handleWebSocketMessage.bind(this),
+            this.handleDisconnect.bind(this)
+          );
           return;
         }
       } catch (error) {
-        console.error("Failed to parse existing connection info, creating a new one.", error);
+        console.error(
+          "Failed to parse existing connection info, creating a new one.",
+          error
+        );
       }
       localStorage.removeItem("zoro_connect");
     }
 
     const sessionId = generateRequestId();
-    
+
     try {
-      const { ticketId } = await this.connection.getTicket(this.appName, sessionId, this.version);
+      const { ticketId } = await this.connection.getTicket(
+        this.appName,
+        sessionId,
+        this.version
+      );
       this.ticketId = ticketId;
-      
-      localStorage.setItem("zoro_connect", JSON.stringify({ sessionId, ticketId }));
-      
-      const url = new URL("/connect/", this.connection.walletUrl);
+
+      localStorage.setItem(
+        "zoro_connect",
+        JSON.stringify({ sessionId, ticketId })
+      );
+
+      const url = new URL("/connect", this.connection.walletUrl);
       url.searchParams.set("ticketId", ticketId);
-      
+
       if (this.redirectUrl) {
         url.searchParams.set("redirectUrl", this.redirectUrl);
       }
-      
+
       const connectUrl = url.toString();
       this.showQrCode(connectUrl);
-      this.connection.connectWebSocket(ticketId, this.handleWebSocketMessage.bind(this), this.handleDisconnect.bind(this));
+      this.connection.connectWebSocket(
+        ticketId,
+        this.handleWebSocketMessage.bind(this),
+        this.handleDisconnect.bind(this)
+      );
     } catch (error) {
       console.error(error);
       return;
@@ -169,9 +205,9 @@ export class ZoroSDK {
 
     if (message.type === MessageType.HANDSHAKE_ACCEPT) {
       console.log("[ZoroSDK] Entering HANDSHAKE_ACCEPT flow");
-      
+
       const { authToken, partyId, publicKey, email } = message.data || {};
-      
+
       if (authToken && partyId && publicKey) {
         this.provider = new Provider({
           connection: this.connection!,
@@ -179,11 +215,11 @@ export class ZoroSDK {
           authToken,
           publicKey,
           openWallet: this.openWallet.bind(this),
-          walletUrl: this.connection!.walletUrl
+          walletUrl: this.connection!.walletUrl,
         });
-        
+
         const connectionInfoRaw = localStorage.getItem("zoro_connect");
-        
+
         if (connectionInfoRaw) {
           try {
             const connectionInfo = JSON.parse(connectionInfoRaw);
@@ -191,28 +227,40 @@ export class ZoroSDK {
             connectionInfo.partyId = partyId;
             connectionInfo.publicKey = publicKey;
             connectionInfo.email = email;
-            
-            localStorage.setItem("zoro_connect", JSON.stringify(connectionInfo));
+
+            localStorage.setItem(
+              "zoro_connect",
+              JSON.stringify(connectionInfo)
+            );
             this.onAccept?.(this.provider);
             this.hideQrCode();
-            
-            this.connection?.connectWebSocket(connectionInfo.ticketId, this.handleWebSocketMessage.bind(this), this.handleDisconnect.bind(this));
-            
-            console.log("[ZoroSDK] HANDSHAKE_ACCEPT: closing popup (if exists)");
+
+            this.connection?.connectWebSocket(
+              connectionInfo.ticketId,
+              this.handleWebSocketMessage.bind(this),
+              this.handleDisconnect.bind(this)
+            );
+
+            console.log(
+              "[ZoroSDK] HANDSHAKE_ACCEPT: closing popup (if exists)"
+            );
             this.popupWindow = null;
           } catch (error) {
-            console.error("Failed to update local storage with auth token.", error);
+            console.error(
+              "Failed to update local storage with auth token.",
+              error
+            );
           }
         }
       }
     } else if (message.type === MessageType.HANDSHAKE_REJECT) {
       console.log("[ZoroSDK] Entering HANDSHAKE_REJECT flow");
-      
+
       localStorage.removeItem("zoro_connect");
       this.connection?.ws?.close();
       this.onReject?.();
       this.hideQrCode();
-      
+
       console.log("[ZoroSDK] HANDSHAKE_REJECT: closing popup (if exists)");
       if (this.popupWindow && !this.popupWindow.closed) {
         this.popupWindow.close();
@@ -222,8 +270,12 @@ export class ZoroSDK {
       console.log("[ZoroSDK] Entering HANDSHAKE_DISCONNECT flow");
       console.log("message", message);
       this.handleDisconnect();
-    }
-    else if (this.provider && (message.type === MessageType.SIGN_REQUEST_APPROVED || message.type === MessageType.SIGN_REQUEST_REJECTED || message.type === MessageType.SIGN_REQUEST_ERROR)) {
+    } else if (
+      this.provider &&
+      (message.type === MessageType.SIGN_REQUEST_APPROVED ||
+        message.type === MessageType.SIGN_REQUEST_REJECTED ||
+        message.type === MessageType.SIGN_REQUEST_ERROR)
+    ) {
       this.provider.handleResponse(message);
     } else {
       console.warn("[ZoroSDK] Unknown message type:", message.type);
@@ -260,13 +312,14 @@ export class ZoroSDK {
       const height = 720;
       const left = (window.innerWidth - width) / 2 + window.screenX;
       const top = (window.innerHeight - height) / 2 + window.screenY;
-      const features = `width=${width},height=${height},` +
+      const features =
+        `width=${width},height=${height},` +
         `left=${left},top=${top},` +
         "menubar=no,toolbar=no,location=no," +
         "resizable=yes,scrollbars=yes,status=no";
 
       const popup = window.open(url, "zoro-wallet", features);
-      
+
       if (!popup) {
         window.open(url, "_blank", "noopener,noreferrer");
         return;

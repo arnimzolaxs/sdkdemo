@@ -1,11 +1,11 @@
 export enum MessageType {
   HANDSHAKE_ACCEPT = "handshake_accept",
   HANDSHAKE_REJECT = "handshake_reject",
-  HANDSHAKE_DISCONNECT = 'handshake_disconnect',
+  HANDSHAKE_DISCONNECT = "handshake_disconnect",
   SIGN_REQUEST = "sign_request",
   SIGN_REQUEST_APPROVED = "sign_request_approved",
   SIGN_REQUEST_REJECTED = "sign_request_rejected",
-  SIGN_REQUEST_ERROR = 'sign_request_error'
+  SIGN_REQUEST_ERROR = "sign_request_error",
 }
 
 export enum SigningRequestType {
@@ -29,7 +29,7 @@ export interface WebSocketMessage {
 export enum SignRequestResponseType {
   SIGN_REQUEST_APPROVED = "sign_request_approved",
   SIGN_REQUEST_REJECTED = "sign_request_rejected",
-  SIGN_REQUEST_ERROR = "sign_request_error"
+  SIGN_REQUEST_ERROR = "sign_request_error",
 }
 
 export interface SignRequestApprovedResponse {
@@ -47,7 +47,10 @@ export interface SignRequestErrorResponse {
 
 export interface SignRequestResponse {
   type: SignRequestResponseType;
-  data: SignRequestApprovedResponse | SignRequestRejectedResponse | SignRequestErrorResponse;
+  data:
+    | SignRequestApprovedResponse
+    | SignRequestRejectedResponse
+    | SignRequestErrorResponse;
 }
 
 export interface Instrument {
@@ -63,7 +66,7 @@ export interface CreateTransferCommandParams {
   expiryDate?: string; // ISO Date String, will default to 24 hours from now
 }
 
-export type TransactionInstructionChoice = 'Accept' | 'Reject' | 'Withdraw';
+export type TransactionInstructionChoice = "Accept" | "Reject" | "Withdraw";
 
 export interface CreateTransactionChoiceCommandParams {
   transferContractId: string;
