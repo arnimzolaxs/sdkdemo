@@ -116,7 +116,7 @@ export class Provider {
   }
 
   submitTransactionCommand(transactionCommand: TransactionCommand, onResponse: (response: SignRequestResponse) => void) {
-    return this.sendRequest(SigningRequestType.SUBMIT_TRANSACTION, { transactionCommand }, onResponse);
+    return this.sendRequest(SigningRequestType.SUBMIT_TRANSACTION, { transactionCommand: JSON.stringify(transactionCommand) }, onResponse);
   }
 
   signMessage(message: string, onResponse: (response: SignRequestResponse) => void) {
