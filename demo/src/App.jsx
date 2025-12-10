@@ -1,94 +1,155 @@
-import { useState, useEffect } from 'react';
-import { zoro, Provider } from '@openvector/zoro-sdk';
-import './App.css';
+import { useState, useEffect } from "react";
+import { zoro, SignRequestResponseType } from "@openvector/zoro-sdk";
+import "./App.css";
 
 function App() {
-  const [provider, setProvider] = useState(null);
-  const [status, setStatus] = useState({ text: 'Not connected', connected: false });
+  const [wallet, setWallet] = useState(null);
+  const [status, setStatus] = useState({
+    text: "Not connected",
+    connected: false,
+  });
   const [result, setResult] = useState(null);
   const [isConnecting, setIsConnecting] = useState(false);
 
   useEffect(() => {
     // Initialize the SDK
     zoro.init({
-      appName: 'Zoro SDK Demo',
-      network: 'mainnet',
-      onAccept: (provider) => {
-        console.log('Connected!', provider);
-        setProvider(provider);
-        setStatus({ text: 'Connected', connected: true });
+      appName: "Zoro SDK Demo",
+      network: "local",
+      onAccept: (wallet) => {
+        console.log("Connected!", wallet);
+        setWallet(wallet);
+        setStatus({ text: "Connected", connected: true });
         setIsConnecting(false);
       },
       onReject: () => {
-        console.log('Connection rejected');
-        setStatus({ text: 'Connection rejected', connected: false });
+        console.log("Connection rejected");
+        setStatus({ text: "Connection rejected", connected: false });
         setIsConnecting(false);
-      }
+      },
+      onDisconnect: () => {
+        console.log("Disconnected");
+        setStatus({ text: "Disconnected", connected: false });
+        setIsConnecting(false);
+        setWallet(null);
+        setResult(null);
+      },
+      walletUrl: "http://localhost:8081",
+      apiUrl: "http://localhost:1337",
     });
   }, []);
 
   const handleConnect = async () => {
     try {
       setIsConnecting(true);
-      setStatus({ text: 'Connecting...', connected: false });
+      setStatus({ text: "Connecting...", connected: false });
       await zoro.connect();
     } catch (error) {
-      console.error('Connection error:', error);
+      console.error("Connection error:", error);
       setStatus({ text: `Error: ${error.message}`, connected: false });
       setIsConnecting(false);
     }
   };
 
   const handleDisconnect = () => {
-    localStorage.removeItem('zoro_connect');
-    if (zoro.connection?.ws) {
-      zoro.connection.ws.close();
-    }
-    zoro.provider = null;
-    setProvider(null);
-    setStatus({ text: 'Disconnected', connected: false });
+    zoro.disconnect();
+    setWallet(null);
+    setStatus({ text: "Disconnected", connected: false });
     setResult(null);
   };
 
-  const handleGetHolding = async () => {
-    if (!provider) {
-      setResult({ title: 'Error', data: 'Not connected' });
+  const handleGetHoldingTransactions = async () => {
+    if (!wallet) {
+      setResult({ title: "Error", data: "Not connected" });
       return;
     }
 
     try {
-      const holding = await provider.getHolding();
-      setResult({ title: 'Holding', data: holding });
+      const holdingTransactions = await wallet.getHoldingTransactions();
+      setResult({
+        title: "Holding Transactions",
+        data: holdingTransactions.transactions,
+      });
     } catch (error) {
-      setResult({ title: 'Error', data: error.message });
-    }
-  };
-
-  const handleGetActiveContracts = async () => {
-    if (!provider) {
-      setResult({ title: 'Error', data: 'Not connected' });
-      return;
-    }
-
-    try {
-      const contracts = await provider.getActiveContracts();
-      setResult({ title: 'Active Contracts', data: contracts });
-    } catch (error) {
-      setResult({ title: 'Error', data: error.message });
+      setResult({ title: "Error", data: error.message });
     }
   };
 
   const handleSignMessage = () => {
-    if (!provider) {
-      setResult({ title: 'Error', data: 'Not connected' });
+    if (!wallet) {
+      setResult({ title: "Error", data: "Not connected" });
       return;
     }
 
-    const message = prompt('Enter message to sign:');
+    const message = prompt("Enter message to sign:");
     if (!message) return;
 
-    provider.signMessage(message, (signature) => {
-      setResult({ title: 'Signature', data: signature });
+    wallet.signMessage(message, (response) => {
+      switch (response.type) {
+        case SignRequestResponseType.SIGN_REQUEST_APPROVED:
+          setResult({ title: "Signature", data: response.data.signature });
+          break;
+        case SignRequestResponseType.SIGN_REQUEST_REJECTED:
+          setResult({ title: "Error", data: "Request rejected by the wallet" });
+          break;
+        case SignRequestResponseType.SIGN_REQUEST_ERROR:
+          setResult({ title: "Error", data: response.data.error });
+          break;
+        default:
+          setResult({ title: "Error", data: "Unknown response type" });
+          break;
+      }
+    });
+  };
+
+  const handleCreateTransferCommand = async () => {
+    if (!wallet) {
+      setResult({ title: "Error", data: "Not connected" });
+      return;
+    }
+
+    const transferCommand = await wallet.createTransferCommand({
+      receiverPartyId: "receiverPartyId",
+      amount: "10",
+      instrument: {
+        id: "Amulet",
+        admin:
+          "DSO::1220b1431ef217342db44d516bb9befde802be7d8899637d290895fa58880f19accc",
+      },
+      memo: "Demo dapp transfer",
+    });
+    setResult({ title: "Transfer Command", data: { transferCommand } });
+  };
+
+  const handleSubmitTransactionCommand = async () => {
+    if (!wallet) {
+      setResult({ title: "Error", data: "Not connected" });
+      return;
+    }
+
+    if (!result.data.transferCommand) {
+      setResult({ title: "Error", data: "No transfer command found" });
+      return;
+    }
+
+    wallet.submitTransactionCommand(result.data.transferCommand, (response) => {
+      switch (response.type) {
+        case SignRequestResponseType.SIGN_REQUEST_APPROVED:
+          setResult({ title: "updateId", data: response.data.updateId });
+          break;
+        case SignRequestResponseType.SIGN_REQUEST_REJECTED:
+          setResult({
+            title: "Error",
+            data: "Request rejected by the wallet",
+          });
+          break;
+        case SignRequestResponseType.SIGN_REQUEST_ERROR:
+          setResult({ title: "Error", data: response.data.error });
+          break;
+        default:
+          setResult({ title: "Error", data: "Unknown response type" });
+          break;
+      }
     });
   };
 
@@ -96,22 +157,23 @@ function App() {
     <div className="app">
       <div className="container">
         <h1>Zoro SDK Demo</h1>
-        
-        <div className={`status ${status.connected ? 'connected' : ''} ${status.text.includes('Error') ? 'error' : ''}`}>
+
+        <div
+          className={`status ${status.connected ? "connected" : ""} ${
+            status.text.includes("Error") ? "error" : ""
+          }`}
+        >
           <strong>Status:</strong> <span>{status.text}</span>
         </div>
 
         <div className="buttons">
-          <button 
-            onClick={handleConnect} 
+          <button
+            onClick={handleConnect}
             disabled={status.connected || isConnecting}
           >
-            {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+            {isConnecting ? "Connecting..." : "Connect Wallet"}
           </button>
-          <button 
-            onClick={handleDisconnect} 
-            disabled={!status.connected}
-          >
+          <button onClick={handleDisconnect} disabled={!status.connected}>
             Disconnect
           </button>
         </div>
@@ -119,16 +181,28 @@ function App() {
         {status.connected && (
           <div className="actions">
             <h2>Actions</h2>
-            <button onClick={handleGetHolding}>Get Holding</button>
-            <button onClick={handleGetActiveContracts}>Get Active Contracts</button>
+            <button onClick={handleGetHoldingTransactions}>
+              Get Holding Transactions
+            </button>
             <button onClick={handleSignMessage}>Sign Message</button>
+            <button onClick={handleCreateTransferCommand}>
+              Create Transfer Command
+            </button>
+            {/* <button onClick={handleCreateTransactionChoiceCommand}>Create Transaction Choice Command</button> */}
+            <button onClick={handleSubmitTransactionCommand}>
+              Submit Transaction Command
+            </button>
           </div>
         )}
 
         {result && (
           <div className="result">
             <h3>{result.title}</h3>
-            <pre>{typeof result.data === 'string' ? result.data : JSON.stringify(result.data, null, 2)}</pre>
+            <pre>
+              {typeof result.data === "string"
+                ? result.data
+                : JSON.stringify(result.data, null, 2)}
+            </pre>
           </div>
         )}
       </div>
@@ -137,4 +211,3 @@ function App() {
 }
 
 export default App;
-

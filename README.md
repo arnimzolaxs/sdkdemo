@@ -51,22 +51,10 @@ import { zoro } from '@openvector/zoro-sdk';
 zoro.init({
   appName: 'My App',
   network: 'mainnet',
-  onAccept: (provider) => {
-    console.log('Connected!', provider);
+  onAccept: (wallet) => {
+    console.log('Connected!', wallet);
   }
 });
 
 await zoro.connect();
 ```
-
-## Publishing
-
-Only the `packages/zoro-sdk` directory will be published to npm. The `demo/` directory is excluded.
-
-To publish:
-
-```bash
-cd packages/zoro-sdk
-npm publish
-```
-

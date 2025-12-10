@@ -17,12 +17,15 @@ import { zoro } from '@openvector/zoro-sdk';
 zoro.init({
   appName: 'My App',
   network: 'mainnet',
-  onAccept: (provider) => {
-    console.log('Connected!', provider);
-    // Use provider to interact with wallet
+  onAccept: (wallet) => {
+    console.log('Connected!', wallet);
+    // Use wallet to interact with Zoro Wallet
   },
   onReject: () => {
     console.log('Connection rejected');
+  },
+  onDisconnect: () => {
+    console.log('Disconnected');
   }
 });
 
@@ -34,25 +37,20 @@ await zoro.connect();
 
 ### Network Options
 
-- `mainnet` or `main` - Main network (default)
-- `testnet` or `test` - Test network
-- `devnet` or `dev` - Development network
+- `mainnet` - Main network (default)
 - `local` - Local development
 
 ### Initialization Options
 
 ```typescript
 zoro.init({
-  appName: string,           // Your application name
-  network?: string,          // Network to connect to (default: 'main')
-  walletUrl?: string,        // Custom wallet URL
-  apiUrl?: string,           // Custom API URL
-  onAccept?: (provider) => void,  // Callback when connection is accepted
-  onReject?: () => void,    // Callback when connection is rejected
-  options?: {
-    openMode?: 'popup' | 'redirect',  // How to open wallet (default: 'popup')
-    redirectUrl?: string,    // Redirect URL for redirect mode
-  }
+  appName: string,                    // Your application name (required)
+  network?: string,                    // Network to connect to (default: 'main')
+  walletUrl?: string,                  // Custom wallet URL
+  apiUrl?: string,                     // Custom API URL
+  onAccept?: (wallet: Wallet) => void, // Callback when connection is accepted
+  onReject?: () => void,               // Callback when connection is rejected
+  onDisconnect?: () => void,           // Callback when wallet disconnects
 });
 ```
 
@@ -68,163 +66,260 @@ This will:
 1. Check for existing connection in localStorage
 2. If no connection exists, create a new ticket and show QR code
 3. Wait for wallet approval via WebSocket
-4. Call `onAccept` callback with provider when connected
+4. Call `onAccept` callback with wallet instance when connected
 
-### Using the Provider
+### Disconnecting
 
-Once connected, you'll receive a `Provider` instance in the `onAccept` callback:
+```typescript
+zoro.disconnect();
+```
+
+This will disconnect from the wallet and clear the connection state.
+
+### Using the Wallet
+
+Once connected, you'll receive a `Wallet` instance in the `onAccept` callback:
 
 ```typescript
 zoro.init({
   appName: 'My App',
-  onAccept: async (provider) => {
-    // Get account holdings
-    const holdings = await provider.getHolding();
-    console.log('Holdings:', holdings);
+  onAccept: async (wallet) => {
+    // Get holding transactions
+    const { transactions, nextOffset } = await wallet.getHoldingTransactions();
+    console.log('Transactions:', transactions);
 
-    // Get active contracts
-    const contracts = await provider.getActiveContracts();
+    // Get pending transactions
+    const pending = await wallet.getPendingTransactions();
+    console.log('Pending:', pending);
+
+    // Get holding UTXOs
+    const utxos = await wallet.getHoldingUtxos();
+    console.log('UTXOs:', utxos);
+
+    // Get active contracts by interface ID
+    const contracts = await wallet.getActiveContractsByInterfaceId('interface-id');
     console.log('Contracts:', contracts);
 
-    // Get contracts by template ID
-    const templateContracts = await provider.getActiveContracts({
-      templateId: 'template-id'
-    });
+    // Get active contracts by template ID
+    const templateContracts = await wallet.getActiveContractsByTemplateId('template-id');
+    console.log('Template Contracts:', templateContracts);
 
     // Sign a message
-    provider.signMessage('Hello, Zoro!', (signature) => {
-      console.log('Signature:', signature);
+    wallet.signMessage('Hello, Zoro!', (response) => {
+      if (response.type === SignRequestResponseType.SIGN_REQUEST_APPROVED) {
+        console.log('Signature:', response.data.signature);
+      } else if (response.type === SignRequestResponseType.SIGN_REQUEST_REJECTED) {
+        console.log('Request rejected:', response.data.reason);
+      }
     });
 
-    // Submit a transaction
-    await provider.submitTransaction({
-      // transaction payload
+    // Create and submit a transfer command
+    const transferCommand = await wallet.createTransferCommand({
+      receiverPartyId: 'receiver-party-id',
+      amount: '10',
+      instrument: {
+        id: 'Amulet',
+        admin: 'DSO::1220b1431ef217342db44d516bb9befde802be7d8899637d290895fa58880f19accc'
+      },
+      memo: 'Payment for services'
+    });
+
+    wallet.submitTransactionCommand(transferCommand, (response) => {
+      if (response.type === SignRequestResponseType.SIGN_REQUEST_APPROVED) {
+        console.log('Transaction submitted:', response.data.updateId);
+      }
     });
   }
 });
 ```
 
-### Provider Methods
+## Wallet API
 
-#### `getHolding()`
+### Methods
 
-Get account holdings.
+#### `getHoldingTransactions()`
 
-```typescript
-const holdings = await provider.getHolding();
-```
-
-#### `getActiveContracts(params?)`
-
-Get active contracts for the account.
+Get holding transactions for the connected wallet.
 
 ```typescript
-// Get all active contracts
-const contracts = await provider.getActiveContracts();
+const { transactions, nextOffset } = await wallet.getHoldingTransactions();
+```
 
-// Filter by template ID
-const contracts = await provider.getActiveContracts({
-  templateId: 'template-id'
-});
+Returns:
+- `transactions`: Array of transaction objects
+- `nextOffset`: Offset for pagination
 
-// Filter by interface ID
-const contracts = await provider.getActiveContracts({
-  interfaceId: 'interface-id'
+#### `getPendingTransactions()`
+
+Get pending transactions.
+
+```typescript
+const pending = await wallet.getPendingTransactions();
+```
+
+#### `getHoldingUtxos()`
+
+Get holding UTXOs (Unspent Transaction Outputs).
+
+```typescript
+const utxos = await wallet.getHoldingUtxos();
+```
+
+#### `getActiveContractsByInterfaceId(interfaceId: string)`
+
+Get active contracts filtered by interface ID.
+
+```typescript
+const contracts = await wallet.getActiveContractsByInterfaceId('interface-id');
+```
+
+#### `getActiveContractsByTemplateId(templateId: string)`
+
+Get active contracts filtered by template ID.
+
+```typescript
+const contracts = await wallet.getActiveContractsByTemplateId('template-id');
+```
+
+#### `createTransferCommand(params: CreateTransferCommandParams)`
+
+Create a transfer command.
+
+```typescript
+const transferCommand = await wallet.createTransferCommand({
+  receiverPartyId: string,
+  amount: string,
+  instrument: {
+    id: string,
+    admin: string
+  },
+  memo?: string,
+  expiryDate?: string  // ISO Date String, defaults to 24 hours from now
 });
 ```
 
-#### `signMessage(message, callback)`
+#### `createTransactionChoiceCommand(params: CreateTransactionChoiceCommandParams)`
+
+Create a transaction choice command.
+
+```typescript
+const choiceCommand = await wallet.createTransactionChoiceCommand({
+  transferContractId: string,
+  choice: 'Accept' | 'Reject' | 'Withdraw',
+  instrument: {
+    id: string,
+    admin: string
+  }
+});
+```
+
+#### `submitTransactionCommand(transactionCommand: TransactionCommand, onResponse: (response: SignRequestResponse) => void)`
+
+Submit a transaction command for signing.
+
+```typescript
+wallet.submitTransactionCommand(transferCommand, (response) => {
+  switch (response.type) {
+    case SignRequestResponseType.SIGN_REQUEST_APPROVED:
+      console.log('Update ID:', response.data.updateId);
+      break;
+    case SignRequestResponseType.SIGN_REQUEST_REJECTED:
+      console.log('Rejected:', response.data.reason);
+      break;
+    case SignRequestResponseType.SIGN_REQUEST_ERROR:
+      console.log('Error:', response.data.error);
+      break;
+  }
+});
+```
+
+#### `signMessage(message: string, onResponse: (response: SignRequestResponse) => void)`
 
 Sign a raw message.
 
 ```typescript
-provider.signMessage('Message to sign', (signature) => {
-  console.log('Signature:', signature);
-});
-```
-
-#### `submitTransaction(payload)`
-
-Submit a transaction.
-
-```typescript
-await provider.submitTransaction({
-  txn: {
-    // transaction data
+wallet.signMessage('Message to sign', (response) => {
+  switch (response.type) {
+    case SignRequestResponseType.SIGN_REQUEST_APPROVED:
+      console.log('Signature:', response.data.signature);
+      break;
+    case SignRequestResponseType.SIGN_REQUEST_REJECTED:
+      console.log('Rejected:', response.data.reason);
+      break;
+    case SignRequestResponseType.SIGN_REQUEST_ERROR:
+      console.log('Error:', response.data.error);
+      break;
   }
 });
 ```
 
-## API Reference
+### Wallet Properties
 
-### Classes
+- `partyId`: Party ID of the connected wallet
+- `publicKey`: Public key of the wallet
+- `email`: Email address (if available)
+- `authToken`: Authentication token
 
-#### `ZoroSDK`
+## Types
 
-Main SDK class. A singleton instance `zoro` is exported by default.
+### SignRequestResponseType
 
-**Methods:**
+Enum for sign request response types:
 
-- `init(options)` - Initialize the SDK
-- `connect()` - Connect to wallet
-- `openWallet(url)` - Open wallet in popup or new tab
-- `showQrCode(url)` - Display QR code overlay
-- `hideQrCode()` - Hide QR code overlay
+```typescript
+enum SignRequestResponseType {
+  SIGN_REQUEST_APPROVED = "sign_request_approved",
+  SIGN_REQUEST_REJECTED = "sign_request_rejected",
+  SIGN_REQUEST_ERROR = "sign_request_error"
+}
+```
 
-#### `Provider`
+### SignRequestResponse
 
-Provider instance returned after successful connection.
+Response object for sign requests:
 
-**Properties:**
+```typescript
+interface SignRequestResponse {
+  type: SignRequestResponseType;
+  data: SignRequestApprovedResponse | SignRequestRejectedResponse | SignRequestErrorResponse;
+}
+```
 
-- `party_id` - Party ID
-- `public_key` - Public key
-- `email` - Email (if available)
-- `auth_token` - Authentication token
-- `connection` - Connection instance
+### Instrument
 
-**Methods:**
+Instrument interface for transfers:
 
-- `getHolding()` - Get account holdings
-- `getActiveContracts(params?)` - Get active contracts
-- `signMessage(message, callback)` - Sign a message
-- `submitTransaction(payload)` - Submit a transaction
+```typescript
+interface Instrument {
+  id: string;
+  admin: string;
+}
+```
 
-#### `Connection`
+### CreateTransferCommandParams
 
-Connection management class.
+Parameters for creating a transfer command:
 
-**Methods:**
+```typescript
+interface CreateTransferCommandParams {
+  receiverPartyId: string;
+  amount: string;
+  instrument: Instrument;
+  memo?: string;
+  expiryDate?: string;  // ISO Date String
+}
+```
 
-- `getTicket(appName, sessionId, version?)` - Get connection ticket
-- `getHolding(authToken)` - Get holdings
-- `getActiveContracts(authToken, params?)` - Get active contracts
-- `verifySession(authToken)` - Verify session
-- `connectWebSocket(ticketId, onMessage)` - Connect WebSocket
+### TransactionCommand
 
-### Types
+Transaction command object:
 
-#### `MessageType`
-
-Enum of message types:
-
-- `HANDSHAKE_ACCEPT`
-- `HANDSHAKE_REJECT`
-- `RUN_TRANSACTION`
-- `RUN_TRANSACTION_RESPONSE`
-- `SIGN_RAW_MESSAGE`
-- `SIGN_RAW_MESSAGE_RESPONSE`
-- `REJECT_REQUEST`
-
-### Errors
-
-#### `RequestTimeoutError`
-
-Thrown when a request times out.
-
-#### `RejectRequestError`
-
-Thrown when a request is rejected by the wallet.
+```typescript
+interface TransactionCommand {
+  command: any;
+  disclosedContracts: any[];
+}
+```
 
 ## Examples
 
@@ -232,20 +327,23 @@ Thrown when a request is rejected by the wallet.
 
 ```typescript
 import { useEffect, useState } from 'react';
-import { zoro, Provider } from '@openvector/zoro-sdk';
+import { zoro, SignRequestResponseType } from '@openvector/zoro-sdk';
 
 function App() {
-  const [provider, setProvider] = useState<Provider | null>(null);
+  const [wallet, setWallet] = useState(null);
 
   useEffect(() => {
     zoro.init({
       appName: 'My React App',
       network: 'mainnet',
-      onAccept: (provider) => {
-        setProvider(provider);
+      onAccept: (wallet) => {
+        setWallet(wallet);
       },
       onReject: () => {
         console.log('Connection rejected');
+      },
+      onDisconnect: () => {
+        setWallet(null);
       }
     });
   }, []);
@@ -255,18 +353,21 @@ function App() {
   };
 
   const handleSign = () => {
-    if (!provider) return;
-    provider.signMessage('Hello!', (signature) => {
-      console.log('Signed:', signature);
+    if (!wallet) return;
+    
+    wallet.signMessage('Hello!', (response) => {
+      if (response.type === SignRequestResponseType.SIGN_REQUEST_APPROVED) {
+        console.log('Signed:', response.data.signature);
+      }
     });
   };
 
   return (
     <div>
-      {!provider && (
+      {!wallet && (
         <button onClick={handleConnect}>Connect Wallet</button>
       )}
-      {provider && (
+      {wallet && (
         <button onClick={handleSign}>Sign Message</button>
       )}
     </div>
@@ -277,23 +378,37 @@ function App() {
 ### Vanilla JavaScript Example
 
 ```javascript
-import { zoro } from '@openvector/zoro-sdk';
+import { zoro, SignRequestResponseType } from '@openvector/zoro-sdk';
+
+let wallet = null;
 
 zoro.init({
   appName: 'My App',
   network: 'mainnet',
-  onAccept: async (provider) => {
-    console.log('Connected!', provider);
-    
-    // Get holdings
-    const holdings = await provider.getHolding();
-    console.log('Holdings:', holdings);
+  onAccept: (connectedWallet) => {
+    wallet = connectedWallet;
+    console.log('Connected!', wallet);
+  },
+  onDisconnect: () => {
+    wallet = null;
+    console.log('Disconnected');
   }
 });
 
 // Connect when button is clicked
 document.getElementById('connectBtn').addEventListener('click', async () => {
   await zoro.connect();
+});
+
+// Sign message
+document.getElementById('signBtn').addEventListener('click', () => {
+  if (!wallet) return;
+  
+  wallet.signMessage('Hello!', (response) => {
+    if (response.type === SignRequestResponseType.SIGN_REQUEST_APPROVED) {
+      console.log('Signature:', response.data.signature);
+    }
+  });
 });
 ```
 
@@ -307,4 +422,3 @@ This SDK requires:
 ## License
 
 ISC
-
