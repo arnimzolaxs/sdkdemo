@@ -51,8 +51,8 @@ import { zoro } from '@openvector/zoro-sdk';
 zoro.init({
   appName: 'My App',
   network: 'mainnet',
-  onAccept: (provider) => {
-    console.log('Connected!', provider);
+  onAccept: (wallet) => {
+    console.log('Connected!', wallet);
   }
 });
 
