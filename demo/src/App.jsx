@@ -55,15 +55,15 @@ function App() {
     setResult(null);
   };
 
-  const handleGetHolding = async () => {
+  const handleGetHoldingTransactions = async () => {
     if (!provider) {
       setResult({ title: 'Error', data: 'Not connected' });
       return;
     }
 
     try {
-      const holding = await provider.getHolding();
-      setResult({ title: 'Holding', data: holding });
+      const holdingTransactions = await provider.getHoldingTransactions();
+      setResult({ title: 'Holding Transactions', data: holdingTransactions.transactions });
     } catch (error) {
       setResult({ title: 'Error', data: error.message });
     }
@@ -137,7 +137,7 @@ function App() {
         {status.connected && (
           <div className="actions">
             <h2>Actions</h2>
-            <button onClick={handleGetHolding}>Get Holding</button>
+            <button onClick={handleGetHoldingTransactions}>Get Holding Transactions</button>
             <button onClick={handleGetActiveContracts}>Get Active Contracts</button>
             <button onClick={handleSignMessage}>Sign Message</button>
           </div>

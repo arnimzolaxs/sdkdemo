@@ -52,8 +52,8 @@ export class Connection {
     return response.json();
   }
 
-  async getHolding(authToken: string) {
-    const response = await fetch(`${this.apiUrl}/api/v1/connect/account/holding`, {
+  async getHoldingTransactions(authToken: string) {
+    const response = await fetch(`${this.apiUrl}/api/v1/connect/wallet/holding-transactions`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -62,7 +62,7 @@ export class Connection {
     });
 
     if (!response.ok) {
-      throw new Error("Failed to get holdings.");
+      throw new Error("Failed to get holding transactions.");
     }
 
     return response.json();

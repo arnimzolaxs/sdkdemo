@@ -87,8 +87,8 @@ export class Provider {
     }
   }
 
-  async getHolding() {
-    return this.connection.getHolding(this.authToken);
+  async getHoldingTransactions(): Promise<{ transactions: any[], nextOffset: number }> {
+    return this.connection.getHoldingTransactions(this.authToken);
   }
 
   async getActiveContracts(params?: { templateId?: string; interfaceId?: string }) {
