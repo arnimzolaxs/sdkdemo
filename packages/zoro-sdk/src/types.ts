@@ -48,3 +48,21 @@ export interface SignRequestResponse {
   type: SignRequestResponseType;
   data: SignRequestApprovedResponse | SignRequestRejectedResponse | SignRequestErrorResponse;
 }
+
+export interface Instrument {
+  id: string;
+  admin: string;
+}
+
+export interface CreateTransferCommandParams {
+  receiverPartyId: string;
+  amount: string;
+  instrument: Instrument;
+  memo?: string;
+  expiryDate?: string; // ISO Date String, will default to 24 hours from now
+}
+
+export interface TransactionCommand {
+  command: any;
+  disclosedContracts: any[];
+}

@@ -1,3 +1,5 @@
+import { CreateTransferCommandParams } from "./types";
+
 export class Connection {
   walletUrl = "https://zorowallet.com";
   apiUrl = "https://api.zorowallet.com";
@@ -146,6 +148,23 @@ export class Connection {
     };
 
     return verifiedAccount;
+  }
+
+  async createTransferCommand(authToken: string, params: CreateTransferCommandParams) {
+    const response = await fetch(`${this.apiUrl}/api/v1/connect/wallet/create-transfer-command`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`
+      },
+      body: JSON.stringify(params)
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to create transfer command.");
+    }
+
+    return response.json();
   }
 
   websocketUrl(ticketId: string): string {

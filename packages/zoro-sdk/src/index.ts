@@ -10,7 +10,9 @@ export {
   type SignRequestApprovedResponse,
   type SignRequestRejectedResponse,
   type SignRequestErrorResponse,
-  type SignRequestResponse
+  type SignRequestResponse,
+  type Instrument,
+  type CreateTransferCommandParams
 } from './types';
 
 // Main SDK class
