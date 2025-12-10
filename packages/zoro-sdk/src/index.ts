@@ -1,6 +1,6 @@
 import QRCode from "qrcode";
 import { Connection } from "./connection";
-import { Provider } from "./provider";
+import { Wallet } from "./wallet";
 import { generateRequestId } from "./utils";
 import { MessageType } from "./types";
 
@@ -19,11 +19,11 @@ export class ZoroSDK {
   version = "0.0.1";
   appName = "Unknown";
   connection: Connection | null = null;
-  provider: Provider | null = null;
+  wallet: Wallet | null = null;
   openMode = "popup";
   popupWindow: Window | null = null;
   redirectUrl?: string;
-  onAccept: ((provider: Provider) => void) | null = null;
+  onAccept: ((wallet: Wallet) => void) | null = null;
   onReject: (() => void) | null = null;
   onDisconnect: (() => void) | null = null;
   overlay: HTMLElement | null = null;
@@ -44,7 +44,7 @@ export class ZoroSDK {
     network?: string;
     walletUrl?: string;
     apiUrl?: string;
-    onAccept?: (provider: Provider) => void;
+    onAccept?: (wallet: Wallet) => void;
     onReject?: () => void;
     options?: {
       openMode?: string;
@@ -98,7 +98,7 @@ export class ZoroSDK {
               verifiedAccount.partyId === partyId &&
               verifiedAccount.publicKey === publicKey
             ) {
-              this.provider = new Provider({
+              this.wallet = new Wallet({
                 connection: this.connection,
                 partyId,
                 authToken,
@@ -107,7 +107,7 @@ export class ZoroSDK {
                 walletUrl: this.connection!.walletUrl,
               });
 
-              this.onAccept?.(this.provider);
+              this.onAccept?.(this.wallet);
 
               this.connection.connectWebSocket(
                 ticketId,
@@ -209,7 +209,7 @@ export class ZoroSDK {
       const { authToken, partyId, publicKey, email } = message.data || {};
 
       if (authToken && partyId && publicKey) {
-        this.provider = new Provider({
+        this.wallet = new Wallet({
           connection: this.connection!,
           partyId,
           authToken,
@@ -232,7 +232,7 @@ export class ZoroSDK {
               "zoro_connect",
               JSON.stringify(connectionInfo)
             );
-            this.onAccept?.(this.provider);
+            this.onAccept?.(this.wallet);
             this.hideQrCode();
 
             this.connection?.connectWebSocket(
@@ -271,12 +271,12 @@ export class ZoroSDK {
       console.log("message", message);
       this.handleDisconnect();
     } else if (
-      this.provider &&
+      this.wallet &&
       (message.type === MessageType.SIGN_REQUEST_APPROVED ||
         message.type === MessageType.SIGN_REQUEST_REJECTED ||
         message.type === MessageType.SIGN_REQUEST_ERROR)
     ) {
-      this.provider.handleResponse(message);
+      this.wallet.handleResponse(message);
     } else {
       console.warn("[ZoroSDK] Unknown message type:", message.type);
     }
@@ -298,7 +298,7 @@ export class ZoroSDK {
       this.popupWindow.close();
     }
     this.popupWindow = null;
-    this.provider = null;
+    this.wallet = null;
     this.ticketId = null;
   }
 

@@ -10,7 +10,7 @@ import {
 } from "./types";
 import { generateRequestId } from "./utils";
 
-export class Provider {
+export class Wallet {
   connection: Connection;
   partyId: string;
   publicKey: string;
