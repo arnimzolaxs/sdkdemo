@@ -257,7 +257,6 @@ wallet.signMessage('Message to sign', (response) => {
 
 - `partyId`: Party ID of the connected wallet
 - `publicKey`: Public key of the wallet
-- `email`: Email address (if available)
 - `authToken`: Authentication token
 
 ## Types
