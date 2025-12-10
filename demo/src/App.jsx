@@ -69,20 +69,6 @@ function App() {
     }
   };
 
-  const handleGetActiveContracts = async () => {
-    if (!provider) {
-      setResult({ title: 'Error', data: 'Not connected' });
-      return;
-    }
-
-    try {
-      const contracts = await provider.getActiveContracts();
-      setResult({ title: 'Active Contracts', data: contracts });
-    } catch (error) {
-      setResult({ title: 'Error', data: error.message });
-    }
-  };
-
   const handleSignMessage = () => {
     if (!provider) {
       setResult({ title: 'Error', data: 'Not connected' });
@@ -138,7 +124,6 @@ function App() {
           <div className="actions">
             <h2>Actions</h2>
             <button onClick={handleGetHoldingTransactions}>Get Holding Transactions</button>
-            <button onClick={handleGetActiveContracts}>Get Active Contracts</button>
             <button onClick={handleSignMessage}>Sign Message</button>
           </div>
         )}

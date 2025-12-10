@@ -91,8 +91,12 @@ export class Provider {
     return this.connection.getHoldingTransactions(this.authToken);
   }
 
-  async getActiveContracts(params?: { templateId?: string; interfaceId?: string }) {
-    return this.connection.getActiveContracts(this.authToken, params);
+  async getActiveContractsByInterfaceId(interfaceId: string) {
+    return this.connection.getActiveContracts(this.authToken, { interfaceId });
+  }
+
+  async getActiveContractsByTemplateId(templateId: string) {
+    return this.connection.getActiveContracts(this.authToken, { templateId });
   }
 
   // async submitTransaction(payload: any) {

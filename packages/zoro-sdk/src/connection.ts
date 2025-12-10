@@ -72,22 +72,13 @@ export class Connection {
     templateId?: string;
     interfaceId?: string;
   }) {
-    const url = new URL(`${this.apiUrl}/api/v1/connect/account/active-contracts`);
-    
-    if (params?.templateId) {
-      url.searchParams.append("templateId", params.templateId);
-    }
-    
-    if (params?.interfaceId) {
-      url.searchParams.append("interfaceId", params.interfaceId);
-    }
-
-    const response = await fetch(url.toString(), {
-      method: "GET",
+    const response = await fetch(`${this.apiUrl}/api/v1/connect/wallet/active-contracts`, {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${authToken}`
-      }
+      },
+      body: JSON.stringify(params)
     });
 
     if (!response.ok) {
