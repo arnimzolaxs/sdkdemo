@@ -18,6 +18,7 @@ export {
 export class ZoroSDK {
   version = "0.0.1";
   appName = "Unknown";
+  iconUrl?: string;
   connection: Connection | null = null;
   wallet: Wallet | null = null;
   openMode = "popup";
@@ -33,6 +34,7 @@ export class ZoroSDK {
 
   init({
     appName,
+    iconUrl,
     network,
     walletUrl,
     apiUrl,
@@ -41,6 +43,7 @@ export class ZoroSDK {
     onDisconnect,
   }: {
     appName: string;
+    iconUrl?: string;
     network?: string;
     walletUrl?: string;
     apiUrl?: string;
@@ -49,6 +52,7 @@ export class ZoroSDK {
     onDisconnect?: () => void;
   }) {
     this.appName = appName;
+    this.iconUrl = iconUrl || undefined;
     this.onAccept = onAccept || null;
     this.onReject = onReject || null;
     this.onDisconnect = onDisconnect || null;
@@ -163,7 +167,8 @@ export class ZoroSDK {
       const { ticketId } = await this.connection.getTicket(
         this.appName,
         sessionId,
-        this.version
+        this.version,
+        this.iconUrl
       );
       this.ticketId = ticketId;
 

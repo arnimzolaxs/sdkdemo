@@ -16,6 +16,7 @@ import { zoro } from '@openvector/zoro-sdk';
 // Initialize the SDK
 zoro.init({
   appName: 'My App',
+  iconUrl: 'https://yourapp.com/icon.png', // optional, shown in the wallet
   network: 'mainnet',
   onAccept: (wallet) => {
     console.log('Connected!', wallet);
@@ -45,7 +46,8 @@ await zoro.connect();
 ```typescript
 zoro.init({
   appName: string,                    // Your application name (required)
-  network?: string,                    // Network to connect to (default: 'main')
+  iconUrl?: string,                   // App icon URL shown in the wallet (optional)
+  network?: string,                   // Network to connect to (default: 'mainnet')
   walletUrl?: string,                  // Custom wallet URL
   apiUrl?: string,                     // Custom API URL
   onAccept?: (wallet: Wallet) => void, // Callback when connection is accepted

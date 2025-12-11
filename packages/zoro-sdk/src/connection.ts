@@ -42,15 +42,21 @@ export class Connection {
     }
   }
 
-  async getTicket(appName: string, sessionId: string, version?: string) {
+  async getTicket(
+    appName: string,
+    sessionId: string,
+    version?: string,
+    iconUrl?: string
+  ) {
     const response = await fetch(`${this.apiUrl}/api/v1/connect/tickets`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        appName: appName,
-        sessionId: sessionId,
+        appName,
+        sessionId,
+        iconUrl,
       }),
     });
 
