@@ -367,7 +367,7 @@ export class ZoroSDK {
       overlay.style.left = "0";
       overlay.style.width = "100%";
       overlay.style.height = "100%";
-      overlay.style.backgroundColor = "rgba(0,0,0,0.9)";
+      overlay.style.backgroundColor = "rgba(0,0,0,0.95)";
       overlay.style.display = "flex";
       overlay.style.justifyContent = "center";
       overlay.style.alignItems = "center";
@@ -379,22 +379,87 @@ export class ZoroSDK {
       content.style.display = "flex";
       content.style.flexDirection = "column";
       content.style.alignItems = "center";
+      content.style.justifyContent = "center";
+      content.style.width = "350px";
+      content.style.backgroundColor = "#141414";
+      content.style.borderRadius = "16px";
+      content.style.border = "1px solid #303030";
+
+      const header = document.createElement("div");
+      header.className = "zoro-sdk-connect-header";
+      header.style.display = "flex";
+      header.style.flexDirection = "column";
+      header.style.alignItems = "center";
+      header.style.justifyContent = "center";
+      header.style.marginBottom = "12px";
+      header.style.padding = "12px";
+      header.style.borderBottom = "1px solid #303030";
+      header.style.width = "100%";
+
+      const title = document.createElement("h2");
+      title.className = "zoro-sdk-connect-title";
+      title.style.fontWeight = "400";
+      title.style.color = "#E5E7EB";
+      title.textContent = "Connect to Zoro Wallet";
+      title.style.margin = "0px";
+      title.style.padding = "0px";
+
+      header.appendChild(title);
+      content.appendChild(header);
+
+      const qrCodeContainer = document.createElement("div");
+      qrCodeContainer.className = "zoro-sdk-connect-qr-code-container";
+      qrCodeContainer.style.display = "flex";
+      qrCodeContainer.style.flexDirection = "column";
+      qrCodeContainer.style.alignItems = "center";
+      qrCodeContainer.style.justifyContent = "center";
+      qrCodeContainer.style.margin = "0px";
+      qrCodeContainer.style.padding = "24px";
+      qrCodeContainer.style.width = "90%";
 
       const img = document.createElement("img");
       img.src = dataUrl;
-      content.appendChild(img);
+      img.style.width = "100%";
+      img.style.objectFit = "contain";
+      img.style.borderRadius = "16px";
+      img.style.marginBottom = "12px";
+      qrCodeContainer.appendChild(img);
 
-      const link = document.createElement("a");
-      link.href = url;
-      link.textContent = "Or click here to connect";
-      link.style.color = "white";
-      link.style.marginTop = "20px";
-      link.onclick = (e) => {
+      const description = document.createElement("p");
+      description.className = "zoro-sdk-connect-description";
+      description.style.fontSize = "14px";
+      description.style.color = "#808080";
+      description.textContent = "Scan this QR code with your phone";
+      qrCodeContainer.appendChild(description);
+
+      content.appendChild(qrCodeContainer);
+
+      const btn = document.createElement("button");
+      btn.textContent = "Connect Wallet";
+      btn.style.color = "#0A0A0A";
+      btn.style.width = "90%";
+      btn.style.margin = "24px";
+      btn.style.marginTop = "0px";
+      btn.style.padding = "0px 16px";
+      btn.style.borderRadius = "16px";
+      btn.style.backgroundColor = "#e9b873";
+      btn.style.cursor = "pointer";
+      btn.style.border = "none";
+      btn.style.outline = "none";
+      btn.style.display = "flex";
+      btn.style.alignItems = "center";
+      btn.style.justifyContent = "center";
+      btn.style.textAlign = "center";
+      btn.style.verticalAlign = "middle";
+      btn.style.lineHeight = "40px";
+      btn.style.fontSize = "14px";
+      btn.style.fontWeight = "550";
+      btn.onclick = (e) => {
         e.preventDefault();
         this.openWallet(url);
       };
 
-      content.appendChild(link);
+      content.appendChild(btn);
       overlay.appendChild(content);
 
       overlay.onclick = (e) => {
