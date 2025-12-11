@@ -416,11 +416,14 @@ export class ZoroSDK {
   }
 
   closePopup() {
-    console.log("closing popup (if exists)");
-    if (this.popupWindow && !this.popupWindow.closed) {
-      this.popupWindow.close();
-    }
-    this.popupWindow = null;
+    console.log("closing popup gracefully...");
+    // close after 1 second to ensure the popup is closed gracefully
+    setTimeout(() => {
+      if (this.popupWindow && !this.popupWindow.closed) {
+        this.popupWindow.close();
+      }
+      this.popupWindow = null;
+    }, 1000);
   }
 }
 
