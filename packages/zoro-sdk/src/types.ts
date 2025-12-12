@@ -1,3 +1,5 @@
+export type Network = "local" | "mainnet";
+
 export enum MessageType {
   HANDSHAKE_ACCEPT = "handshake_accept",
   HANDSHAKE_REJECT = "handshake_reject",

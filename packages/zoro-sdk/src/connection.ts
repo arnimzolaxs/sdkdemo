@@ -1,24 +1,40 @@
 import {
   CreateTransactionChoiceCommandParams,
   CreateTransferCommandParams,
+  MessageType,
+  Network,
+  SigningRequestType,
+  SignRequestResponse,
+  WebSocketMessage,
 } from "./types";
+import { generateRequestId } from "./utils";
 
 export class Connection {
-  walletUrl = "https://zorowallet.com";
-  apiUrl = "https://api.zorowallet.com";
-  ws: WebSocket | null = null;
-  network = "main";
+  walletUrl: string = "https://zorowallet.com";
+  apiUrl: string = "https://api.zorowallet.com";
+  network: Network = "mainnet";
+  openWalletForRequest: (requestId: string) => void;
+  closeWallet: () => void;
+  ws: WebSocket | undefined = undefined;
+
+  #requests = new Map<string, (response: SignRequestResponse) => void>();
 
   constructor({
     network,
     walletUrl,
     apiUrl,
+    openWalletForRequest,
+    closeWallet,
   }: {
-    network?: string;
+    network?: Network;
     walletUrl?: string;
     apiUrl?: string;
+    openWalletForRequest: (requestId: string) => void;
+    closeWallet: () => void;
   }) {
-    this.network = network || "mainnet";
+    this.network = network ?? "mainnet";
+    this.openWalletForRequest = openWalletForRequest;
+    this.closeWallet = closeWallet;
 
     switch (this.network) {
       case "local":
@@ -227,18 +243,12 @@ export class Connection {
     return response.json();
   }
 
-  websocketUrl(ticketId: string): string {
-    const protocol = this.network === "local" ? "ws" : "wss";
-    const baseUrl = this.apiUrl.replace("https://", "").replace("http://", "");
-    return `${protocol}://${baseUrl}/connect/ws?ticketId=${ticketId}`;
-  }
-
   connectWebSocket(
     ticketId: string,
     onMessage: (event: MessageEvent) => void,
     onDisconnect: () => void
   ) {
-    const wsUrl = this.websocketUrl(ticketId);
+    const wsUrl = this.#websocketUrl(ticketId);
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onmessage = onMessage;
@@ -255,7 +265,65 @@ export class Connection {
         onDisconnect();
       }
       this.ws?.close();
-      this.ws = null;
+      this.ws = undefined;
     };
+  }
+
+  sendRequest(
+    requestType: SigningRequestType,
+    payload: any = {},
+    onResponse: (response: SignRequestResponse) => void
+  ) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      throw new Error("Not connected.");
+    }
+
+    const requestId = generateRequestId();
+
+    this.ws.send(
+      JSON.stringify({
+        requestId: requestId,
+        type: MessageType.SIGN_REQUEST,
+        data: {
+          requestType,
+          payload,
+        },
+      })
+    );
+
+    this.#requests.set(requestId, onResponse);
+
+    this.openWalletForRequest(requestId);
+  }
+
+  handleResponse(message: WebSocketMessage) {
+    console.log("Received response:", message);
+
+    if (message.requestId && this.#requests.has(message.requestId)) {
+      const onResponse = this.#requests.get(message.requestId);
+      if (onResponse) {
+        onResponse({
+          type: message.type as any,
+          data: message.data as any,
+        });
+        this.#requests.delete(message.requestId);
+      } else {
+        console.error(
+          "No onResponse function found for requestId:",
+          message.requestId
+        );
+      }
+      if (this.closeWallet) {
+        this.closeWallet();
+      }
+    } else {
+      console.error("No requestId found in message:", message);
+    }
+  }
+
+  #websocketUrl(ticketId: string): string {
+    const protocol = this.network === "local" ? "ws" : "wss";
+    const baseUrl = this.apiUrl.replace("https://", "").replace("http://", "");
+    return `${protocol}://${baseUrl}/connect/ws?ticketId=${ticketId}`;
   }
 }
