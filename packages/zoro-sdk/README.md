@@ -419,7 +419,3 @@ This SDK requires:
 - Modern browsers with WebSocket support
 - ES2020+ support
 - LocalStorage API
-
-## License
-
-ISC
