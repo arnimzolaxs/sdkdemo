@@ -2,7 +2,7 @@ import QRCode from "qrcode";
 import { Connection } from "./connection";
 import { Wallet } from "./wallet";
 import { generateRequestId } from "./utils";
-import { MessageType } from "./types";
+import { MessageType, Network } from "./types";
 
 export {
   SignRequestResponseType,
@@ -12,23 +12,26 @@ export {
   type SignRequestResponse,
   type Instrument,
   type CreateTransferCommandParams,
+  type Network,
 } from "./types";
+
+export { type Wallet } from "./wallet";
 
 // Main SDK class
 export class ZoroSDK {
-  version = "0.0.1";
-  appName = "Unknown";
+  version: string = "0.0.1";
+  appName: string = "Unknown";
   iconUrl?: string;
-  connection: Connection | null = null;
-  wallet: Wallet | null = null;
-  openMode = "popup";
-  popupWindow: Window | null = null;
+  connection?: Connection;
+  wallet?: Wallet;
+  openMode: "popup" | "redirect" = "popup";
+  popupWindow?: Window;
   redirectUrl?: string;
-  onAccept: ((wallet: Wallet) => void) | null = null;
-  onReject: (() => void) | null = null;
-  onDisconnect: (() => void) | null = null;
-  overlay: HTMLElement | null = null;
-  ticketId: string | null = null;
+  onAccept?: (wallet: Wallet) => void;
+  onReject?: () => void;
+  onDisconnect?: () => void;
+  overlay?: HTMLElement;
+  ticketId?: string;
 
   constructor() {}
 
@@ -44,21 +47,21 @@ export class ZoroSDK {
   }: {
     appName: string;
     iconUrl?: string;
-    network?: string;
+    network?: Network;
     walletUrl?: string;
     apiUrl?: string;
-    onAccept?: (wallet: Wallet) => void;
+    onAccept: (wallet: Wallet) => void;
     onReject?: () => void;
     onDisconnect?: () => void;
   }) {
     this.appName = appName;
-    this.iconUrl = iconUrl || undefined;
-    this.onAccept = onAccept || null;
-    this.onReject = onReject || null;
-    this.onDisconnect = onDisconnect || null;
+    this.iconUrl = iconUrl;
+    this.onAccept = onAccept;
+    this.onReject = onReject;
+    this.onDisconnect = onDisconnect;
 
     const resolvedOptions = {
-      openMode: "popup",
+      openMode: "popup" as "popup" | "redirect",
       redirectUrl: undefined,
     };
 
@@ -294,9 +297,9 @@ export class ZoroSDK {
     if (this.popupWindow && !this.popupWindow.closed) {
       this.popupWindow.close();
     }
-    this.popupWindow = null;
-    this.wallet = null;
-    this.ticketId = null;
+    this.popupWindow = undefined;
+    this.wallet = undefined;
+    this.ticketId = undefined;
   }
 
   openWallet(url: string) {
@@ -478,7 +481,7 @@ export class ZoroSDK {
   hideQrCode() {
     if (this.overlay && this.overlay.parentElement) {
       this.overlay.parentElement.removeChild(this.overlay);
-      this.overlay = null;
+      this.overlay = undefined;
     }
   }
 
@@ -489,7 +492,7 @@ export class ZoroSDK {
       if (this.popupWindow && !this.popupWindow.closed) {
         this.popupWindow.close();
       }
-      this.popupWindow = null;
+      this.popupWindow = undefined;
     }, 1000);
   }
 }

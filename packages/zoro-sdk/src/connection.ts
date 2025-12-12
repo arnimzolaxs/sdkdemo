@@ -2,6 +2,7 @@ import {
   CreateTransactionChoiceCommandParams,
   CreateTransferCommandParams,
   MessageType,
+  Network,
   SigningRequestType,
   SignRequestResponse,
   WebSocketMessage,
@@ -12,7 +13,7 @@ export class Connection {
   walletUrl: string = "https://zorowallet.com";
   apiUrl: string = "https://api.zorowallet.com";
   ws: WebSocket | undefined = undefined;
-  network: string = "mainnet";
+  network: Network = "mainnet";
   requests = new Map<string, (response: SignRequestResponse) => void>();
   openWalletForRequest: (requestId: string) => void;
   closeWallet: () => void;
@@ -24,7 +25,7 @@ export class Connection {
     openWalletForRequest,
     closeWallet,
   }: {
-    network?: string;
+    network?: Network;
     walletUrl?: string;
     apiUrl?: string;
     openWalletForRequest: (requestId: string) => void;
