@@ -76,7 +76,9 @@ This will:
 zoro.disconnect();
 ```
 
-This will disconnect from the wallet and clear the connection state.
+Note: 
+- This will disconnect from the server only. Actual disconnect happens through Wallet.
+- You can connect again with the same connection(if not disconnected from the Wallet).
 
 ### Using the Wallet
 
