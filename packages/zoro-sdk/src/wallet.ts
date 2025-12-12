@@ -58,7 +58,9 @@ export class Wallet {
   }
 
   async getActiveContractsByInterfaceId(interfaceId: string) {
-    return this.#connection.getActiveContracts(this.#authToken, { interfaceId });
+    return this.#connection.getActiveContracts(this.#authToken, {
+      interfaceId,
+    });
   }
 
   async getActiveContractsByTemplateId(templateId: string) {

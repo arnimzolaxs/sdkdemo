@@ -8,19 +8,19 @@ import {
   SignRequestApprovedResponse,
   SignRequestRejectedResponse,
   SignRequestErrorResponse,
+  TransactionInstructionChoice,
 } from "@openvector/zoro-sdk";
 import "./App.css";
 
-type ResultState =
-  | null
-  | {
-      title: string;
-      data: unknown;
-    };
+type ResultState = null | {
+  title: string;
+  data: any;
+};
 
 const transferInstrument = {
   id: "Amulet",
-  admin: "DSO::1220b1431ef217342db44d516bb9befde802be7d8899637d290895fa58880f19accc",
+  admin:
+    "DSO::1220b1431ef217342db44d516bb9befde802be7d8899637d290895fa58880f19accc",
 };
 
 function App() {
@@ -62,7 +62,10 @@ function App() {
       setStatus({ text: "Connecting...", connected: false });
       await zoro.connect();
     } catch (error: any) {
-      setStatus({ text: `Error: ${error?.message ?? "Unknown error"}`, connected: false });
+      setStatus({
+        text: `Error: ${error?.message ?? "Unknown error"}`,
+        connected: false,
+      });
       setIsConnecting(false);
     }
   };
@@ -91,6 +94,23 @@ function App() {
     }
   };
 
+  const handleGetPendingTransactions = async () => {
+    if (!wallet) {
+      setResult({ title: "Error", data: "Not connected" });
+      return;
+    }
+
+    try {
+      const pendingTransactions = await wallet.getPendingTransactions();
+      setResult({
+        title: "Pending Transactions",
+        data: { pendingTransactions },
+      });
+    } catch (error: any) {
+      setResult({ title: "Error", data: error?.message ?? "Unknown error" });
+    }
+  };
+
   const handleSignMessage = () => {
     if (!wallet) {
       setResult({ title: "Error", data: "Not connected" });
@@ -103,13 +123,22 @@ function App() {
     wallet.signMessage(message, (response: SignRequestResponse) => {
       switch (response.type) {
         case SignRequestResponseType.SIGN_REQUEST_APPROVED:
-          setResult({ title: "Signature", data: (response.data as SignRequestApprovedResponse).signature });
+          setResult({
+            title: "Signature",
+            data: (response.data as SignRequestApprovedResponse).signature,
+          });
           break;
         case SignRequestResponseType.SIGN_REQUEST_REJECTED:
-          setResult({ title: "Error", data: (response.data as SignRequestRejectedResponse).reason });
+          setResult({
+            title: "Error",
+            data: (response.data as SignRequestRejectedResponse).reason,
+          });
           break;
         case SignRequestResponseType.SIGN_REQUEST_ERROR:
-          setResult({ title: "Error", data: (response.data as SignRequestErrorResponse).error });
+          setResult({
+            title: "Error",
+            data: (response.data as SignRequestErrorResponse).error,
+          });
           break;
         default:
           setResult({ title: "Error", data: "Unknown response type" });
@@ -126,12 +155,45 @@ function App() {
 
     try {
       const transferCommand = await wallet.createTransferCommand({
-        receiverPartyId: "receiverPartyId",
-        amount: "10",
+        receiverPartyId:
+          "a1124243993ba9223263a237ce387b72::1220959da192d32f46f1f2013875b08edfb8845bceed9dffafc18d84a3e75aba61b7",
+        amount: "1",
         instrument: transferInstrument,
         memo: "Demo dapp transfer",
       });
       setResult({ title: "Transfer Command", data: { transferCommand } });
+    } catch (error: any) {
+      setResult({ title: "Error", data: error?.message ?? "Unknown error" });
+    }
+  };
+
+  const handleCreateTransactionChoiceCommand = async () => {
+    if (!wallet) {
+      setResult({ title: "Error", data: "Not connected" });
+      return;
+    }
+
+    const pendingTransactions = (result?.data as any)?.pendingTransactions;
+    if (!pendingTransactions || pendingTransactions.length === 0) {
+      setResult({ title: "Error", data: "No pending transactions found" });
+      return;
+    }
+
+    const choice = prompt("Enter choice (Accept, Reject, Withdraw):");
+    if (!choice) return;
+
+    try {
+      const transactionChoiceCommand =
+        await wallet.createTransactionChoiceCommand({
+          transferContractId: pendingTransactions[0]?.contractId,
+          choice: choice as TransactionInstructionChoice,
+          instrument:
+            pendingTransactions[0]?.interfaceViewValue?.transfer?.instrumentId,
+        });
+      setResult({
+        title: "Transaction Choice Command",
+        data: { transactionChoiceCommand },
+      });
     } catch (error: any) {
       setResult({ title: "Error", data: error?.message ?? "Unknown error" });
     }
@@ -143,22 +205,33 @@ function App() {
       return;
     }
 
-    const transferCommand = (result?.data as any)?.transferCommand as TransactionCommand | undefined;
-    if (!transferCommand) {
+    const transactionCommand =
+      (result?.data as any)?.transferCommand ??
+      (result?.data as any)?.transactionChoiceCommand;
+    if (!transactionCommand) {
       setResult({ title: "Error", data: "No transfer command found" });
       return;
     }
 
-    wallet.submitTransactionCommand(transferCommand, (response) => {
+    wallet.submitTransactionCommand(transactionCommand, (response) => {
       switch (response.type) {
         case SignRequestResponseType.SIGN_REQUEST_APPROVED:
-          setResult({ title: "Update ID", data: (response.data as SignRequestApprovedResponse).updateId });
+          setResult({
+            title: "Update ID",
+            data: (response.data as SignRequestApprovedResponse).updateId,
+          });
           break;
         case SignRequestResponseType.SIGN_REQUEST_REJECTED:
-          setResult({ title: "Error", data: (response.data as SignRequestRejectedResponse).reason });
+          setResult({
+            title: "Error",
+            data: (response.data as SignRequestRejectedResponse).reason,
+          });
           break;
         case SignRequestResponseType.SIGN_REQUEST_ERROR:
-          setResult({ title: "Error", data: (response.data as SignRequestErrorResponse).error });
+          setResult({
+            title: "Error",
+            data: (response.data as SignRequestErrorResponse).error,
+          });
           break;
         default:
           setResult({ title: "Error", data: "Unknown response type" });
@@ -181,7 +254,10 @@ function App() {
         </div>
 
         <div className="buttons">
-          <button onClick={handleConnect} disabled={status.connected || isConnecting}>
+          <button
+            onClick={handleConnect}
+            disabled={status.connected || isConnecting}
+          >
             {isConnecting ? "Connecting..." : "Connect Wallet"}
           </button>
           <button onClick={handleDisconnect} disabled={!status.connected}>
@@ -192,10 +268,27 @@ function App() {
         {status.connected && (
           <div className="actions">
             <h2>Actions</h2>
-            <button onClick={handleGetHoldingTransactions}>Get Holding Transactions</button>
+            <button onClick={handleGetHoldingTransactions}>
+              Get Holding Transactions
+            </button>
+            <button onClick={handleGetPendingTransactions}>
+              Get Pending Transactions
+            </button>
             <button onClick={handleSignMessage}>Sign Message</button>
-            <button onClick={handleCreateTransferCommand}>Create Transfer Command</button>
-            <button onClick={handleSubmitTransactionCommand}>Submit Transaction Command</button>
+            <button onClick={handleCreateTransferCommand}>
+              Create Transfer Command
+            </button>
+            {result?.data?.pendingTransactions && (
+              <button onClick={handleCreateTransactionChoiceCommand}>
+                Create Transaction Choice Command
+              </button>
+            )}
+            {(result?.data?.transferCommand ||
+              result?.data?.transactionChoiceCommand) && (
+              <button onClick={handleSubmitTransactionCommand}>
+                Submit Transaction Command
+              </button>
+            )}
           </div>
         )}
 
@@ -215,4 +308,3 @@ function App() {
 }
 
 export default App;
-

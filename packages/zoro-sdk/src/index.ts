@@ -16,7 +16,7 @@ export class ZoroSDK {
   onAccept?: (wallet: Wallet) => void;
   onReject?: () => void;
   onDisconnect?: () => void;
-  
+
   #connection?: Connection;
   #wallet?: Wallet;
   #openMode: "popup" | "redirect" = "popup";
@@ -161,29 +161,29 @@ export class ZoroSDK {
     const sessionId = generateRequestId();
 
     try {
-    const { ticketId } = await this.#connection!.getTicket(
-      this.appName,
-      sessionId,
-      this.#version,
-      this.iconUrl
-    );
-    this.#ticketId = ticketId;
+      const { ticketId } = await this.#connection!.getTicket(
+        this.appName,
+        sessionId,
+        this.#version,
+        this.iconUrl
+      );
+      this.#ticketId = ticketId;
 
       localStorage.setItem(
         "zoro_connect",
         JSON.stringify({ sessionId, ticketId })
       );
 
-    const url = new URL("/connect", this.#connection!.walletUrl);
+      const url = new URL("/connect", this.#connection!.walletUrl);
       url.searchParams.set("ticketId", ticketId);
 
-    if (this.#redirectUrl) {
-      url.searchParams.set("redirectUrl", this.#redirectUrl);
+      if (this.#redirectUrl) {
+        url.searchParams.set("redirectUrl", this.#redirectUrl);
       }
 
       const connectUrl = url.toString();
       this.#showQrCode(connectUrl);
-    this.#connection!.connectWebSocket(
+      this.#connection!.connectWebSocket(
         ticketId,
         this.#handleWebSocketMessage.bind(this),
         this.#handleDisconnect.bind(this)
