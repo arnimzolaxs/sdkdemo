@@ -132,21 +132,7 @@ export class ZoroSDK {
         }
 
         if (ticketId && canReuseTicket) {
-          this.#ticketId = ticketId;
-          const url = new URL("/connect/", this.#connection.walletUrl);
-          url.searchParams.set("ticketId", ticketId);
-
-          if (this.#redirectUrl) {
-            url.searchParams.set("redirectUrl", this.#redirectUrl);
-          }
-
-          const connectUrl = url.toString();
-          this.#showQrCode(connectUrl);
-          this.#connection.connectWebSocket(
-            ticketId,
-            this.#handleWebSocketMessage.bind(this),
-            this.#handleDisconnect.bind(this)
-          );
+          this.#initiateConnectionWithTicketId(ticketId);
           return;
         }
       } catch (error) {
@@ -161,33 +147,19 @@ export class ZoroSDK {
     const sessionId = generateRequestId();
 
     try {
-      const { ticketId } = await this.#connection!.getTicket(
+      const { ticketId } = await this.#connection.getTicket(
         this.appName,
         sessionId,
         this.#version,
         this.iconUrl
       );
-      this.#ticketId = ticketId;
 
       localStorage.setItem(
         "zoro_connect",
         JSON.stringify({ sessionId, ticketId })
       );
 
-      const url = new URL("/connect", this.#connection!.walletUrl);
-      url.searchParams.set("ticketId", ticketId);
-
-      if (this.#redirectUrl) {
-        url.searchParams.set("redirectUrl", this.#redirectUrl);
-      }
-
-      const connectUrl = url.toString();
-      this.#showQrCode(connectUrl);
-      this.#connection!.connectWebSocket(
-        ticketId,
-        this.#handleWebSocketMessage.bind(this),
-        this.#handleDisconnect.bind(this)
-      );
+      this.#initiateConnectionWithTicketId(ticketId);
     } catch (error) {
       console.error(error);
       return;
@@ -203,6 +175,29 @@ export class ZoroSDK {
       this.#overlay.parentElement.removeChild(this.#overlay);
       this.#overlay = undefined;
     }
+  }
+
+  #initiateConnectionWithTicketId(ticketId: string) {
+    if (!this.#connection) {
+      throw new Error("SDK not initialized. Call init() first.");
+    }
+
+    this.#ticketId = ticketId;
+
+    const url = new URL("/connect", this.#connection.walletUrl);
+    url.searchParams.set("ticketId", ticketId);
+
+    if (this.#redirectUrl) {
+      url.searchParams.set("redirectUrl", this.#redirectUrl);
+    }
+
+    const connectUrl = url.toString();
+    this.#showQrCode(connectUrl);
+    this.#connection.connectWebSocket(
+      ticketId,
+      this.#handleWebSocketMessage.bind(this),
+      this.#handleDisconnect.bind(this)
+    );
   }
 
   #handleWebSocketMessage(event: MessageEvent) {
@@ -235,15 +230,10 @@ export class ZoroSDK {
               "zoro_connect",
               JSON.stringify(connectionInfo)
             );
+
             this.onAccept?.(this.#wallet);
+
             this.hideQrCode();
-
-            this.#connection?.connectWebSocket(
-              connectionInfo.ticketId,
-              this.#handleWebSocketMessage.bind(this),
-              this.#handleDisconnect.bind(this)
-            );
-
             this.#closePopup();
           } catch (error) {
             console.error(
