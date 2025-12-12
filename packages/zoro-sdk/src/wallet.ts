@@ -8,24 +8,21 @@ import {
 } from "./types";
 
 export class Wallet {
-  connection: Connection;
-  partyId: string;
-  publicKey: string;
-  email?: string;
-  authToken: string;
+  private connection: Connection;
+  private partyId: string;
+  private publicKey: string;
+  private authToken: string;
 
   constructor({
     connection,
     partyId,
     publicKey,
     authToken,
-    email,
   }: {
     connection: Connection;
     partyId: string;
     publicKey: string;
     authToken: string;
-    email?: string;
   }) {
     if (!connection) {
       throw new Error("Provider requires a connection object.");
@@ -34,40 +31,47 @@ export class Wallet {
     this.connection = connection;
     this.partyId = partyId;
     this.publicKey = publicKey;
-    this.email = email;
     this.authToken = authToken;
   }
 
-  async getHoldingTransactions(): Promise<{
+  public getPartyId(): string {
+    return this.partyId;
+  }
+
+  public getPublicKey(): string {
+    return this.publicKey;
+  }
+
+  public async getHoldingTransactions(): Promise<{
     transactions: any[];
     nextOffset: number;
   }> {
     return this.connection.getHoldingTransactions(this.authToken);
   }
 
-  async getPendingTransactions() {
+  public async getPendingTransactions() {
     return this.connection.getPendingTransactions(this.authToken);
   }
 
-  async getHoldingUtxos() {
+  public async getHoldingUtxos() {
     return this.connection.getHoldingUtxos(this.authToken);
   }
 
-  async getActiveContractsByInterfaceId(interfaceId: string) {
+  public async getActiveContractsByInterfaceId(interfaceId: string) {
     return this.connection.getActiveContracts(this.authToken, { interfaceId });
   }
 
-  async getActiveContractsByTemplateId(templateId: string) {
+  public async getActiveContractsByTemplateId(templateId: string) {
     return this.connection.getActiveContracts(this.authToken, { templateId });
   }
 
-  async createTransferCommand(
+  public async createTransferCommand(
     params: CreateTransferCommandParams
   ): Promise<TransactionCommand> {
     return this.connection.createTransferCommand(this.authToken, params);
   }
 
-  async createTransactionChoiceCommand(
+  public async createTransactionChoiceCommand(
     params: CreateTransactionChoiceCommandParams
   ): Promise<TransactionCommand> {
     return this.connection.createTransactionChoiceCommand(
@@ -76,7 +80,7 @@ export class Wallet {
     );
   }
 
-  submitTransactionCommand(
+  public submitTransactionCommand(
     transactionCommand: TransactionCommand,
     onResponse: (response: SignRequestResponse) => void
   ) {
@@ -87,7 +91,7 @@ export class Wallet {
     );
   }
 
-  signMessage(
+  public signMessage(
     message: string,
     onResponse: (response: SignRequestResponse) => void
   ) {

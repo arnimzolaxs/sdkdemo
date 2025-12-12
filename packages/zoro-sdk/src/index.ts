@@ -10,23 +10,24 @@ export { type Wallet } from "./wallet";
 
 // Main SDK class
 export class ZoroSDK {
-  version: string = "0.0.1";
-  appName: string = "Unknown";
-  iconUrl?: string;
-  connection?: Connection;
-  wallet?: Wallet;
-  openMode: "popup" | "redirect" = "popup";
-  popupWindow?: Window;
-  redirectUrl?: string;
-  onAccept?: (wallet: Wallet) => void;
-  onReject?: () => void;
-  onDisconnect?: () => void;
-  overlay?: HTMLElement;
-  ticketId?: string;
+  public appName: string = "Unknown";
+  public iconUrl?: string;
+  public onAccept?: (wallet: Wallet) => void;
+  public onReject?: () => void;
+  public onDisconnect?: () => void;
+
+  private version: string = "0.0.1";
+  private connection?: Connection;
+  private wallet?: Wallet;
+  private openMode: "popup" | "redirect" = "popup";
+  private popupWindow?: Window;
+  private redirectUrl?: string;
+  private overlay?: HTMLElement;
+  private ticketId?: string;
 
   constructor() {}
 
-  init({
+  public init({
     appName,
     iconUrl,
     network,
@@ -67,7 +68,7 @@ export class ZoroSDK {
     });
   }
 
-  async connect() {
+  public async connect() {
     if (typeof window === "undefined") {
       console.warn(
         "ZoroSDK.connect() can only be called in a browser environment."
@@ -195,18 +196,25 @@ export class ZoroSDK {
     }
   }
 
-  disconnect() {
+  public disconnect() {
     this.handleDisconnect(false);
   }
 
-  handleWebSocketMessage(event: MessageEvent) {
+  public hideQrCode() {
+    if (this.overlay && this.overlay.parentElement) {
+      this.overlay.parentElement.removeChild(this.overlay);
+      this.overlay = undefined;
+    }
+  }
+
+  private handleWebSocketMessage(event: MessageEvent) {
     console.log("[ZoroSDK] WS message received:", event.data);
     const message = JSON.parse(event.data);
 
     if (message.type === MessageType.HANDSHAKE_ACCEPT) {
       console.log("[ZoroSDK] Entering HANDSHAKE_ACCEPT flow");
 
-      const { authToken, partyId, publicKey, email } = message.data || {};
+      const { authToken, partyId, publicKey } = message.data || {};
 
       if (authToken && partyId && publicKey) {
         this.wallet = new Wallet({
@@ -224,7 +232,6 @@ export class ZoroSDK {
             connectionInfo.authToken = authToken;
             connectionInfo.partyId = partyId;
             connectionInfo.publicKey = publicKey;
-            connectionInfo.email = email;
 
             localStorage.setItem(
               "zoro_connect",
@@ -273,7 +280,7 @@ export class ZoroSDK {
     }
   }
 
-  handleDisconnect(isClosedByWallet: boolean = true) {
+  private handleDisconnect(isClosedByWallet: boolean = true) {
     localStorage.removeItem("zoro_connect");
     if (this.connection?.ws) {
       this.connection.ws.close();
@@ -293,7 +300,7 @@ export class ZoroSDK {
     this.ticketId = undefined;
   }
 
-  openWallet(url: string) {
+  private openWallet(url: string) {
     if (typeof window === "undefined") {
       return;
     }
@@ -330,7 +337,7 @@ export class ZoroSDK {
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
-  openWalletForRequest(requestId: string) {
+  private openWalletForRequest(requestId: string) {
     if (!this.ticketId) {
       throw new Error("Ticket ID is not set. Call connect() first.");
     }
@@ -344,7 +351,7 @@ export class ZoroSDK {
     this.openWallet(url.toString());
   }
 
-  showQrCode(url: string) {
+  private showQrCode(url: string) {
     if (typeof window === "undefined" || typeof document === "undefined") {
       return;
     }
@@ -469,14 +476,7 @@ export class ZoroSDK {
     });
   }
 
-  hideQrCode() {
-    if (this.overlay && this.overlay.parentElement) {
-      this.overlay.parentElement.removeChild(this.overlay);
-      this.overlay = undefined;
-    }
-  }
-
-  closePopup() {
+  private closePopup() {
     console.log("closing popup gracefully...");
     // close after 1 second to ensure the popup is closed gracefully
     setTimeout(() => {
