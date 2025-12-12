@@ -10,14 +10,14 @@ import {
 import { generateRequestId } from "./utils";
 
 export class Connection {
-  public walletUrl: string = "https://zorowallet.com";
-  public apiUrl: string = "https://api.zorowallet.com";
-  public network: Network = "mainnet";
-  public openWalletForRequest: (requestId: string) => void;
-  public closeWallet: () => void;
-  public ws: WebSocket | undefined = undefined;
+  walletUrl: string = "https://zorowallet.com";
+  apiUrl: string = "https://api.zorowallet.com";
+  network: Network = "mainnet";
+  openWalletForRequest: (requestId: string) => void;
+  closeWallet: () => void;
+  ws: WebSocket | undefined = undefined;
 
-  private requests = new Map<string, (response: SignRequestResponse) => void>();
+  #requests = new Map<string, (response: SignRequestResponse) => void>();
 
   constructor({
     network,
@@ -58,7 +58,7 @@ export class Connection {
     }
   }
 
-  public async getTicket(
+  async getTicket(
     appName: string,
     sessionId: string,
     version?: string,
@@ -83,7 +83,7 @@ export class Connection {
     return response.json();
   }
 
-  public async getHoldingTransactions(authToken: string) {
+  async getHoldingTransactions(authToken: string) {
     const response = await fetch(
       `${this.apiUrl}/api/v1/connect/wallet/holding-transactions`,
       {
@@ -102,7 +102,7 @@ export class Connection {
     return response.json();
   }
 
-  public async getPendingTransactions(authToken: string) {
+  async getPendingTransactions(authToken: string) {
     const response = await fetch(
       `${this.apiUrl}/api/v1/connect/wallet/pending-transactions`,
       {
@@ -121,7 +121,7 @@ export class Connection {
     return response.json();
   }
 
-  public async getHoldingUtxos(authToken: string) {
+  async getHoldingUtxos(authToken: string) {
     const response = await fetch(
       `${this.apiUrl}/api/v1/connect/wallet/holding-utxos`,
       {
@@ -140,7 +140,7 @@ export class Connection {
     return response.json();
   }
 
-  public async getActiveContracts(
+  async getActiveContracts(
     authToken: string,
     params?: {
       templateId?: string;
@@ -166,7 +166,7 @@ export class Connection {
     return response.json();
   }
 
-  public async verifySession(ticketId: string, authToken: string) {
+  async verifySession(ticketId: string, authToken: string) {
     const response = await fetch(
       `${this.apiUrl}/api/v1/connect/ticket/${ticketId}/verify`,
       {
@@ -197,7 +197,7 @@ export class Connection {
     return verifiedAccount;
   }
 
-  public async createTransferCommand(
+  async createTransferCommand(
     authToken: string,
     params: CreateTransferCommandParams
   ) {
@@ -220,7 +220,7 @@ export class Connection {
     return response.json();
   }
 
-  public async createTransactionChoiceCommand(
+  async createTransactionChoiceCommand(
     authToken: string,
     params: CreateTransactionChoiceCommandParams
   ) {
@@ -243,12 +243,12 @@ export class Connection {
     return response.json();
   }
 
-  public connectWebSocket(
+  connectWebSocket(
     ticketId: string,
     onMessage: (event: MessageEvent) => void,
     onDisconnect: () => void
   ) {
-    const wsUrl = this.websocketUrl(ticketId);
+    const wsUrl = this.#websocketUrl(ticketId);
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onmessage = onMessage;
@@ -269,7 +269,7 @@ export class Connection {
     };
   }
 
-  public sendRequest(
+  sendRequest(
     requestType: SigningRequestType,
     payload: any = {},
     onResponse: (response: SignRequestResponse) => void
@@ -291,22 +291,22 @@ export class Connection {
       })
     );
 
-    this.requests.set(requestId, onResponse);
+    this.#requests.set(requestId, onResponse);
 
     this.openWalletForRequest(requestId);
   }
 
-  public handleResponse(message: WebSocketMessage) {
+  handleResponse(message: WebSocketMessage) {
     console.log("Received response:", message);
 
-    if (message.requestId && this.requests.has(message.requestId)) {
-      const onResponse = this.requests.get(message.requestId);
+    if (message.requestId && this.#requests.has(message.requestId)) {
+      const onResponse = this.#requests.get(message.requestId);
       if (onResponse) {
         onResponse({
           type: message.type as any,
           data: message.data as any,
         });
-        this.requests.delete(message.requestId);
+        this.#requests.delete(message.requestId);
       } else {
         console.error(
           "No onResponse function found for requestId:",
@@ -321,7 +321,7 @@ export class Connection {
     }
   }
 
-  private websocketUrl(ticketId: string): string {
+  #websocketUrl(ticketId: string): string {
     const protocol = this.network === "local" ? "ws" : "wss";
     const baseUrl = this.apiUrl.replace("https://", "").replace("http://", "");
     return `${protocol}://${baseUrl}/connect/ws?ticketId=${ticketId}`;
