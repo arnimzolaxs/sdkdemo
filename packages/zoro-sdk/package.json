@@ -28,9 +28,11 @@
     "prepublishOnly": "npm run clean && npm run build"
   },
   "keywords": [
-    "zoro",
+    "canton",
+    "wallet",
     "sdk",
-    "client"
+    "zoro",
+    "connect canton wallet"
   ],
   "author": "",
   "license": "ISC",
@@ -45,4 +47,3 @@
   "peerDependencies": {},
   "peerDependenciesMeta": {}
 }
-
