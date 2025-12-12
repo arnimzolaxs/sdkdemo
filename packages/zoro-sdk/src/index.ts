@@ -435,7 +435,7 @@ export class ZoroSDK {
       content.appendChild(qrCodeContainer);
 
       const btn = document.createElement("button");
-      btn.textContent = "Connect Wallet";
+      btn.textContent = "Connect";
       btn.style.color = "#0A0A0A";
       btn.style.width = "90%";
       btn.style.margin = "24px";
