@@ -1,37 +1,54 @@
-import { useState, useEffect } from "react";
-import { zoro, SignRequestResponseType } from "@openvector/zoro-sdk";
+import { useEffect, useState } from "react";
+import {
+  zoro,
+  SignRequestResponseType,
+  SignRequestResponse,
+  TransactionCommand,
+  Wallet,
+  SignRequestApprovedResponse,
+  SignRequestRejectedResponse,
+  SignRequestErrorResponse,
+} from "@openvector/zoro-sdk";
 import "./App.css";
 
+type ResultState =
+  | null
+  | {
+      title: string;
+      data: unknown;
+    };
+
+const transferInstrument = {
+  id: "Amulet",
+  admin: "DSO::1220b1431ef217342db44d516bb9befde802be7d8899637d290895fa58880f19accc",
+};
+
 function App() {
-  const [wallet, setWallet] = useState(null);
-  const [status, setStatus] = useState({
+  const [wallet, setWallet] = useState<Wallet | undefined>(undefined);
+  const [status, setStatus] = useState<{ text: string; connected: boolean }>({
     text: "Not connected",
     connected: false,
   });
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState<ResultState>(null);
   const [isConnecting, setIsConnecting] = useState(false);
 
   useEffect(() => {
-    // Initialize the SDK
     zoro.init({
       appName: "Zoro SDK Demo",
       network: "local",
-      onAccept: (wallet) => {
-        console.log("Connected!", wallet);
-        setWallet(wallet);
+      onAccept: (connectedWallet: Wallet) => {
+        setWallet(connectedWallet);
         setStatus({ text: "Connected", connected: true });
         setIsConnecting(false);
       },
       onReject: () => {
-        console.log("Connection rejected");
         setStatus({ text: "Connection rejected", connected: false });
         setIsConnecting(false);
       },
       onDisconnect: () => {
-        console.log("Disconnected");
         setStatus({ text: "Disconnected", connected: false });
         setIsConnecting(false);
-        setWallet(null);
+        setWallet(undefined);
         setResult(null);
       },
       walletUrl: "http://localhost:8081",
@@ -44,16 +61,15 @@ function App() {
       setIsConnecting(true);
       setStatus({ text: "Connecting...", connected: false });
       await zoro.connect();
-    } catch (error) {
-      console.error("Connection error:", error);
-      setStatus({ text: `Error: ${error.message}`, connected: false });
+    } catch (error: any) {
+      setStatus({ text: `Error: ${error?.message ?? "Unknown error"}`, connected: false });
       setIsConnecting(false);
     }
   };
 
   const handleDisconnect = () => {
     zoro.disconnect();
-    setWallet(null);
+    setWallet(undefined);
     setStatus({ text: "Disconnected", connected: false });
     setResult(null);
   };
@@ -70,8 +86,8 @@ function App() {
         title: "Holding Transactions",
         data: holdingTransactions.transactions,
       });
-    } catch (error) {
-      setResult({ title: "Error", data: error.message });
+    } catch (error: any) {
+      setResult({ title: "Error", data: error?.message ?? "Unknown error" });
     }
   };
 
@@ -84,16 +100,16 @@ function App() {
     const message = prompt("Enter message to sign:");
     if (!message) return;
 
-    wallet.signMessage(message, (response) => {
+    wallet.signMessage(message, (response: SignRequestResponse) => {
       switch (response.type) {
         case SignRequestResponseType.SIGN_REQUEST_APPROVED:
-          setResult({ title: "Signature", data: response.data.signature });
+          setResult({ title: "Signature", data: (response.data as SignRequestApprovedResponse).signature });
           break;
         case SignRequestResponseType.SIGN_REQUEST_REJECTED:
-          setResult({ title: "Error", data: "Request rejected by the wallet" });
+          setResult({ title: "Error", data: (response.data as SignRequestRejectedResponse).reason });
           break;
         case SignRequestResponseType.SIGN_REQUEST_ERROR:
-          setResult({ title: "Error", data: response.data.error });
+          setResult({ title: "Error", data: (response.data as SignRequestErrorResponse).error });
           break;
         default:
           setResult({ title: "Error", data: "Unknown response type" });
@@ -108,17 +124,17 @@ function App() {
       return;
     }
 
-    const transferCommand = await wallet.createTransferCommand({
-      receiverPartyId: "receiverPartyId",
-      amount: "10",
-      instrument: {
-        id: "Amulet",
-        admin:
-          "DSO::1220b1431ef217342db44d516bb9befde802be7d8899637d290895fa58880f19accc",
-      },
-      memo: "Demo dapp transfer",
-    });
-    setResult({ title: "Transfer Command", data: { transferCommand } });
+    try {
+      const transferCommand = await wallet.createTransferCommand({
+        receiverPartyId: "receiverPartyId",
+        amount: "10",
+        instrument: transferInstrument,
+        memo: "Demo dapp transfer",
+      });
+      setResult({ title: "Transfer Command", data: { transferCommand } });
+    } catch (error: any) {
+      setResult({ title: "Error", data: error?.message ?? "Unknown error" });
+    }
   };
 
   const handleSubmitTransactionCommand = async () => {
@@ -127,24 +143,22 @@ function App() {
       return;
     }
 
-    if (!result.data.transferCommand) {
+    const transferCommand = (result?.data as any)?.transferCommand as TransactionCommand | undefined;
+    if (!transferCommand) {
       setResult({ title: "Error", data: "No transfer command found" });
       return;
     }
 
-    wallet.submitTransactionCommand(result.data.transferCommand, (response) => {
+    wallet.submitTransactionCommand(transferCommand, (response) => {
       switch (response.type) {
         case SignRequestResponseType.SIGN_REQUEST_APPROVED:
-          setResult({ title: "updateId", data: response.data.updateId });
+          setResult({ title: "Update ID", data: (response.data as SignRequestApprovedResponse).updateId });
           break;
         case SignRequestResponseType.SIGN_REQUEST_REJECTED:
-          setResult({
-            title: "Error",
-            data: "Request rejected by the wallet",
-          });
+          setResult({ title: "Error", data: (response.data as SignRequestRejectedResponse).reason });
           break;
         case SignRequestResponseType.SIGN_REQUEST_ERROR:
-          setResult({ title: "Error", data: response.data.error });
+          setResult({ title: "Error", data: (response.data as SignRequestErrorResponse).error });
           break;
         default:
           setResult({ title: "Error", data: "Unknown response type" });
@@ -167,10 +181,7 @@ function App() {
         </div>
 
         <div className="buttons">
-          <button
-            onClick={handleConnect}
-            disabled={status.connected || isConnecting}
-          >
+          <button onClick={handleConnect} disabled={status.connected || isConnecting}>
             {isConnecting ? "Connecting..." : "Connect Wallet"}
           </button>
           <button onClick={handleDisconnect} disabled={!status.connected}>
@@ -181,17 +192,10 @@ function App() {
         {status.connected && (
           <div className="actions">
             <h2>Actions</h2>
-            <button onClick={handleGetHoldingTransactions}>
-              Get Holding Transactions
-            </button>
+            <button onClick={handleGetHoldingTransactions}>Get Holding Transactions</button>
             <button onClick={handleSignMessage}>Sign Message</button>
-            <button onClick={handleCreateTransferCommand}>
-              Create Transfer Command
-            </button>
-            {/* <button onClick={handleCreateTransactionChoiceCommand}>Create Transaction Choice Command</button> */}
-            <button onClick={handleSubmitTransactionCommand}>
-              Submit Transaction Command
-            </button>
+            <button onClick={handleCreateTransferCommand}>Create Transfer Command</button>
+            <button onClick={handleSubmitTransactionCommand}>Submit Transaction Command</button>
           </div>
         )}
 
@@ -211,3 +215,4 @@ function App() {
 }
 
 export default App;
+

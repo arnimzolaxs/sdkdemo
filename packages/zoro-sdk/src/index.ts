@@ -4,16 +4,7 @@ import { Wallet } from "./wallet";
 import { generateRequestId } from "./utils";
 import { MessageType, Network } from "./types";
 
-export {
-  SignRequestResponseType,
-  type SignRequestApprovedResponse,
-  type SignRequestRejectedResponse,
-  type SignRequestErrorResponse,
-  type SignRequestResponse,
-  type Instrument,
-  type CreateTransferCommandParams,
-  type Network,
-} from "./types";
+export * from "./types";
 
 export { type Wallet } from "./wallet";
 
