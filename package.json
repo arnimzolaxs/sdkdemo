@@ -5,10 +5,14 @@
   "description": "Workspace for @openvector/zoro-sdk package",
   "scripts": {
     "build": "pnpm --filter @openvector/zoro-sdk build",
-    "dev": "pnpm --filter zoro-sdk-demo dev"
+    "dev": "pnpm --filter zoro-sdk-demo dev",
+    "ci:version": "pnpm changeset version",
+    "ci:publish": "pnpm --filter @openvector/zoro-sdk exec npm publish --access public"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.8"
   },
   "engines": {
     "node": ">=16.0.0"
   }
 }
-
