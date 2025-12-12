@@ -1,13 +1,21 @@
 import {
   CreateTransactionChoiceCommandParams,
   CreateTransferCommandParams,
+  MessageType,
+  SigningRequestType,
+  SignRequestResponse,
+  WebSocketMessage,
 } from "./types";
+import { generateRequestId } from "./utils";
 
 export class Connection {
   walletUrl = "https://zorowallet.com";
   apiUrl = "https://api.zorowallet.com";
   ws: WebSocket | null = null;
   network = "main";
+  requests = new Map<string, (response: SignRequestResponse) => void>();
+  openWalletForRequest: ((requestId: string) => void) | null = null;
+  closePopup: (() => void) | null = null;
 
   constructor({
     network,
@@ -257,5 +265,59 @@ export class Connection {
       this.ws?.close();
       this.ws = null;
     };
+  }
+
+  sendRequest(
+    requestType: SigningRequestType,
+    payload: any = {},
+    onResponse: (response: SignRequestResponse) => void
+  ) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      throw new Error("Not connected.");
+    }
+
+    const requestId = generateRequestId();
+
+    this.ws.send(
+      JSON.stringify({
+        requestId: requestId,
+        type: MessageType.SIGN_REQUEST,
+        data: {
+          requestType,
+          payload,
+        },
+      })
+    );
+
+    this.requests.set(requestId, onResponse);
+
+    if (this.openWalletForRequest) {
+      this.openWalletForRequest(requestId);
+    }
+  }
+
+  handleResponse(message: WebSocketMessage) {
+    console.log("Received response:", message);
+
+    if (message.requestId && this.requests.has(message.requestId)) {
+      const onResponse = this.requests.get(message.requestId);
+      if (onResponse) {
+        onResponse({
+          type: message.type as any,
+          data: message.data as any,
+        });
+        this.requests.delete(message.requestId);
+      } else {
+        console.error(
+          "No onResponse function found for requestId:",
+          message.requestId
+        );
+      }
+      if (this.closePopup) {
+        this.closePopup();
+      }
+    } else {
+      console.error("No requestId found in message:", message);
+    }
   }
 }

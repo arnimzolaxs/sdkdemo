@@ -104,8 +104,6 @@ export class ZoroSDK {
                 partyId,
                 authToken,
                 publicKey,
-                openWalletForRequest: this.openWalletForRequest.bind(this),
-                closePopup: this.closePopup.bind(this),
               });
 
               this.onAccept?.(this.wallet);
@@ -216,8 +214,6 @@ export class ZoroSDK {
           partyId,
           authToken,
           publicKey,
-          openWalletForRequest: this.openWalletForRequest.bind(this),
-          closePopup: this.closePopup.bind(this),
         });
 
         const connectionInfoRaw = localStorage.getItem("zoro_connect");
@@ -266,12 +262,12 @@ export class ZoroSDK {
       console.log("message", message);
       this.handleDisconnect();
     } else if (
-      this.wallet &&
+      this.connection &&
       (message.type === MessageType.SIGN_REQUEST_APPROVED ||
         message.type === MessageType.SIGN_REQUEST_REJECTED ||
         message.type === MessageType.SIGN_REQUEST_ERROR)
     ) {
-      this.wallet.handleResponse(message);
+      this.connection.handleResponse(message);
     } else {
       console.warn("[ZoroSDK] Unknown message type:", message.type);
     }
