@@ -9,24 +9,30 @@ import {
 import { generateRequestId } from "./utils";
 
 export class Connection {
-  walletUrl = "https://zorowallet.com";
-  apiUrl = "https://api.zorowallet.com";
-  ws: WebSocket | null = null;
-  network = "main";
+  walletUrl: string = "https://zorowallet.com";
+  apiUrl: string = "https://api.zorowallet.com";
+  ws: WebSocket | undefined = undefined;
+  network: string = "mainnet";
   requests = new Map<string, (response: SignRequestResponse) => void>();
-  openWalletForRequest: ((requestId: string) => void) | null = null;
-  closePopup: (() => void) | null = null;
+  openWalletForRequest: (requestId: string) => void;
+  closeWallet: () => void;
 
   constructor({
     network,
     walletUrl,
     apiUrl,
+    openWalletForRequest,
+    closeWallet,
   }: {
     network?: string;
     walletUrl?: string;
     apiUrl?: string;
+    openWalletForRequest: (requestId: string) => void;
+    closeWallet: () => void;
   }) {
-    this.network = network || "mainnet";
+    this.network = network ?? "mainnet";
+    this.openWalletForRequest = openWalletForRequest;
+    this.closeWallet = closeWallet;
 
     switch (this.network) {
       case "local":
@@ -263,7 +269,7 @@ export class Connection {
         onDisconnect();
       }
       this.ws?.close();
-      this.ws = null;
+      this.ws = undefined;
     };
   }
 
@@ -291,9 +297,7 @@ export class Connection {
 
     this.requests.set(requestId, onResponse);
 
-    if (this.openWalletForRequest) {
-      this.openWalletForRequest(requestId);
-    }
+    this.openWalletForRequest(requestId);
   }
 
   handleResponse(message: WebSocketMessage) {
@@ -313,8 +317,8 @@ export class Connection {
           message.requestId
         );
       }
-      if (this.closePopup) {
-        this.closePopup();
+      if (this.closeWallet) {
+        this.closeWallet();
       }
     } else {
       console.error("No requestId found in message:", message);

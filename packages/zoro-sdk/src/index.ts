@@ -64,7 +64,13 @@ export class ZoroSDK {
 
     this.openMode = resolvedOptions.openMode;
     this.redirectUrl = resolvedOptions.redirectUrl;
-    this.connection = new Connection({ network, walletUrl, apiUrl });
+    this.connection = new Connection({
+      network,
+      walletUrl,
+      apiUrl,
+      openWalletForRequest: this.openWalletForRequest.bind(this),
+      closeWallet: this.closePopup.bind(this),
+    });
   }
 
   async connect() {
