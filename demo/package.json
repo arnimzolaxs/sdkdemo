@@ -2,7 +2,7 @@
   "name": "zoro-sdk-demo",
   "version": "1.0.0",
   "private": true,
-  "description": "Demo app for @openvector/zoro-sdk",
+  "description": "Demo app for @open-vector/zoro-sdk",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@openvector/zoro-sdk": "workspace:*",
+    "@open-vector/zoro-sdk": "workspace:*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

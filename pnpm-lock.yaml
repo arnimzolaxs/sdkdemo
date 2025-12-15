@@ -14,7 +14,7 @@ importers:
 
   demo:
     dependencies:
-      '@openvector/zoro-sdk':
+      '@open-vector/zoro-sdk':
         specifier: workspace:*
         version: link:../packages/zoro-sdk
       react:

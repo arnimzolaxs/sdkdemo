@@ -9,7 +9,7 @@ import {
   SignRequestRejectedResponse,
   SignRequestErrorResponse,
   TransactionInstructionChoice,
-} from "@openvector/zoro-sdk";
+} from "@open-vector/zoro-sdk";
 import "./App.css";
 
 type ResultState = null | {

@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@openvector/zoro-sdk': resolve(__dirname, '../packages/zoro-sdk/src/index.ts'),
+      '@open-vector/zoro-sdk': resolve(__dirname, '../packages/zoro-sdk/src/index.ts'),
     },
   },
   server: {

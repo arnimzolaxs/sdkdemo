@@ -46,7 +46,7 @@ This will start the React demo app at `http://localhost:3000`.
 ## Package Usage
 
 ```typescript
-import { zoro } from '@openvector/zoro-sdk';
+import { zoro } from '@open-vector/zoro-sdk';
 
 zoro.init({
   appName: 'My App',
