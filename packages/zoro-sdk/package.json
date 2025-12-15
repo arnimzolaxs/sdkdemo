@@ -1,5 +1,5 @@
 {
-  "name": "@openvector/zoro-sdk",
+  "name": "@open-vector/zoro-sdk",
   "version": "0.0.1",
   "description": "Zoro SDK for client-side applications to connect to Zoro Wallet",
   "type": "module",
