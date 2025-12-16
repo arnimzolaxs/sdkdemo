@@ -257,6 +257,7 @@ const handleCreateTransferCommand = async () => {
       }
       setLoadingAction(null);
     });
+    
   };
   const handleSubmitTransactionChoiceCommand = async () => {
     if (!wallet) return;
