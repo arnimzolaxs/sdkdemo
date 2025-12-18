@@ -63,7 +63,7 @@ const [expandedTxnIndex, setExpandedTxnIndex] = useState<number | null>(null);
   useEffect(() => {
     zoro.init({
       appName: "Zoro SDK Demo",
-      network: "local",
+      network: "mainnet",
       onAccept: (connectedWallet: Wallet) => {
         setWallet(connectedWallet);
         setStatus({ text: "Connected", connected: true });
@@ -79,8 +79,9 @@ const [expandedTxnIndex, setExpandedTxnIndex] = useState<number | null>(null);
         setWallet(undefined);
         setResult(null);
       },
-      walletUrl: "http://localhost:8081",
-      apiUrl: "http://localhost:1337",
+      walletUrl: "http://canton-wallet-preview.vercel.app",
+      apiUrl: "https://dev-api.zorowallet.com",
+      
     });
     const handleUnload = () => {
     zoro.disconnect();
