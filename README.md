@@ -10,6 +10,8 @@ zoro_sdk/
 │   └── zoro-sdk/          # Main package
 └── demo/                  # Demo web app
 ```
+## Demo web app link
+  -[http://34.60.156.152/]
 
 ## Development
 
