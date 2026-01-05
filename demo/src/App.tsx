@@ -8,7 +8,8 @@ import {
   SignRequestRejectedResponse,
   SignRequestErrorResponse,
   TransactionInstructionChoice,
-} from "@openvector/zoro-sdk";
+  loop
+} from "@open-vector/zoro-sdk";
 
 type ResultState = null | {
   title: string;
@@ -29,6 +30,9 @@ const transferInstrument_cbtc= {
   
 function App() {
   const [wallet, setWallet] = useState<Wallet | undefined>(undefined);
+  const [walletChoice, setWalletChoice] = useState<"loop" | "zoro" | null>(null);
+  const[walletChoiceModal,setWalletChoiceModal]=useState(false);
+
   const[transferInstrument,setTransferInstrument]=useState<typeof transferInstrument_cc>(transferInstrument_cc);
   const [status, setStatus] = useState<{ text: string; connected: boolean }>({
     text: "Not connected",
@@ -61,6 +65,27 @@ const [transferMemo, setTransferMemo] = useState("");
 const [expandedTxnIndex, setExpandedTxnIndex] = useState<number | null>(null);
 
   useEffect(() => {
+    loop.init({
+    appName: 'My Awesome dApp',
+    network: 'devnet', // or 'devnet', 'mainnet'
+    options: {
+        openMode: 'popup', // 'popup' (default) or 'tab'
+        requestSigningMode: 'popup', // 'popup' (default) or 'tab'
+        // redirectUrl: 'https://myapp.com/after-connect', // optional redirect after approval
+    },
+    onAccept: (connectedWallet: any) => {
+         setWallet(connectedWallet);
+        setStatus({ text: "Connected", connected: true });
+        setIsConnecting(false);
+        console.log('Connected!', connectedWallet);
+        // You can now use the provider to interact with the wallet
+    },
+    onReject: () => {
+        setStatus({ text: "Connection rejected", connected: false });
+        setIsConnecting(false);
+        console.log('Connection rejected by user.');
+    },
+});
     zoro.init({
       appName: "Zoro SDK Demo",
       network: "mainnet",
@@ -95,21 +120,31 @@ const [expandedTxnIndex, setExpandedTxnIndex] = useState<number | null>(null);
 
 
 
-  }, []);
+  }, [walletChoice]);
 
-  const handleConnect = async () => {
-    setIsConnecting(true);
-    setStatus({ text: "Connecting...", connected: false });
-    try {
+ const handleConnect = async (choice?: "zoro" | "loop") => {
+  setIsConnecting(true);
+  setStatus({ text: "Connecting...", connected: false });
+
+  try {
+    if (choice === "zoro") {
       await zoro.connect();
-    } catch (error: any) {
-      setStatus({
-        text: `Error: ${error?.message ?? "Unknown error"}`,
-        connected: false,
-      });
-      setIsConnecting(false);
+      setWalletChoice("zoro");
     }
-  };
+
+    if (choice === "loop") {
+      await loop.connect();
+      setWalletChoice("loop");
+    }
+  } catch (error: any) {
+    setStatus({
+      text: `Error: ${error?.message ?? "Unknown error"}`,
+      connected: false,
+    });
+    setIsConnecting(false);
+  }
+};
+
 
   const handleDisconnect = () => {
     zoro.disconnect();
@@ -121,6 +156,20 @@ const [expandedTxnIndex, setExpandedTxnIndex] = useState<number | null>(null);
   const handleGetHoldingTransactions = async () => {
     if (!wallet) return;
     setLoadingAction("holding");
+    if(walletChoice=="loop"){
+      try {
+      const holdingTransactions = await wallet.getHolding();
+      console.log(holdingTransactions);
+      setGetHoldingTransactionsresult({
+        title: "Holding Transactions",
+        data: holdingTransactions,
+      });
+    } catch (error: any) {
+      setGetHoldingTransactionsresult({ title: "Error", data: error?.message ?? "Unknown error" });
+    }
+    setLoadingAction(null);
+    return;
+    }
     try {
       const holdingTransactions = await wallet.getHoldingTransactions();
       setGetHoldingTransactionsresult({
@@ -148,9 +197,22 @@ const [expandedTxnIndex, setExpandedTxnIndex] = useState<number | null>(null);
     setLoadingAction(null);
   };
 
-  const handleSignMessage = () => {
+  const handleSignMessage = async () => {
+    
     if (!wallet || !signMessage) return;
     setLoadingAction("sign");
+    if (walletChoice=='loop'){
+    try {
+    const signature = await wallet.signMessage(signMessage);
+   
+    setRaw_messageResult({
+            title: "Signature",
+            data: signature.signature,
+          });
+} catch (error) {
+    console.error('Signing failed:', error);
+}}
+    else if(walletChoice=='zoro'){
     wallet.signMessage(signMessage, (response: SignRequestResponse) => {
       switch (response.type) {
         case SignRequestResponseType.SIGN_REQUEST_APPROVED:
@@ -172,25 +234,38 @@ const [expandedTxnIndex, setExpandedTxnIndex] = useState<number | null>(null);
           });
           break;
       }
-      setLoadingAction(null);
-      6
-      setSignMessage("");
-    });
+      
+    });}
+    setLoadingAction(null);
+      
+    setSignMessage("");
   };
 
 const handleCreateTransferCommand = async () => {
   if (!wallet) return;
   setLoadingAction("transfer");
+  
+ 
   try {
+     if(walletChoice=='loop'){
+      
+    setShowTransferModal(false);
+    setShowSubmitTransferModal(true);
+     setCreateTransferCommandresult({ title: "Transfer Command", data: "" });
+    
+  }
+   else if(walletChoice=='zoro'){
     const transferCommand = await wallet.createTransferCommand({
       receiverPartyId: transferReceiver,
       amount: transferAmount,
       instrument: transferInstrument,
       memo: transferMemo,
     });
-    setCreateTransferCommandresult({ title: "Transfer Command", data: { transferCommand } });
+  setCreateTransferCommandresult({ title: "Transfer Command", data: { transferCommand } });}
+    
     setShowTransferModal(false);
     setShowSubmitTransferModal(true);
+
    
   } catch (error: any) {
     setCreateTransferCommandresult({ title: "Error", data: error?.message ?? "Unknown error" });
@@ -231,6 +306,26 @@ const handleCreateTransferCommand = async () => {
 
   const handleSubmitTransactionCommand = async () => {
     if (!wallet) return;
+    if(walletChoice=='loop'){
+      try {
+        
+      
+      setLoadingAction("submit");
+      const res=await wallet.transfer(transferReceiver,transferAmount,transferInstrument,{message: transferMemo});
+      setTxnsignResult({
+            title: "Submission id",
+            data: res,
+          });
+     } catch (error: any) {
+    setTxnsignResult({
+    title: "error",
+    data: error?.message ?? "Transaction rejected"
+  });
+}
+return;
+
+    }
+    
     const transactionCommand =
       (createTransferCommandresult?.data as any)?.transferCommand 
     if (!transactionCommand) return;
@@ -319,7 +414,7 @@ const handleCreateTransferCommand = async () => {
 
       <div className="flex gap-3">
         <button
-          onClick={handleConnect}
+          onClick={()=>setWalletChoiceModal(true)}
           disabled={status.connected || isConnecting}
           className="px-4 py-2 rounded-xl bg-[#c8a15a] text-black font-medium disabled:opacity-50"
         >
@@ -333,6 +428,43 @@ const handleCreateTransferCommand = async () => {
           Disconnect
         </button>
       </div>
+{walletChoiceModal && (
+  <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+    <div className="bg-[#0f0f0f] p-6 rounded-2xl space-y-4 w-full max-w-sm border border-gray-800">
+      <h2 className="text-lg font-semibold">Select Wallet</h2>
+      <div className="flex gap-3">
+        <button
+          onClick={() => {
+            setWalletChoiceModal(false)
+            handleConnect("zoro")
+          }}
+          className="flex-1 px-4 py-2 rounded-xl bg-[#1a1a1a] border border-gray-700"
+        >
+          Zoro
+        </button>
+        <button
+          onClick={() => {
+            setWalletChoiceModal(false)
+            handleConnect("loop")
+          }}
+          className="flex-1 px-4 py-2 rounded-xl bg-[#1a1a1a] border border-gray-700"
+        >
+          Loop
+        </button>
+      </div>
+      <div className="flex justify-end">
+        <button
+          onClick={() => setWalletChoiceModal(false)}
+          className="px-3 py-1 text-gray-400"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
 
       {status.connected && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -725,7 +857,7 @@ const handleCreateTransferCommand = async () => {
   <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
     <div className="bg-[#0f0f0f] p-6 rounded-2xl space-y-4 w-full max-w-md border border-gray-800">
       <div className="flex items-center gap-3">
-        {txnsignResult.title === "Update ID" ? (
+        {txnsignResult.title === "Update ID"||"Submission id" ? (
           <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
             <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -744,7 +876,7 @@ const handleCreateTransferCommand = async () => {
       </div>
 
       <div className="bg-black border border-gray-800 p-4 rounded-xl">
-        {txnsignResult.title === "Update ID" ? (
+        {txnsignResult.title === "Update ID"||"Submission id" ? (
           <div className="space-y-2">
             <div className="text-sm text-gray-400">Update ID</div>
             <div className="font-mono text-sm break-all text-green-400">

@@ -1,17 +1,17 @@
-# @openvector/zoro-sdk
+# @open-vector/zoro-sdk
 
 Zoro SDK for client-side applications to connect to Zoro Wallet.
 
 ## Installation
 
 ```bash
-npm install @openvector/zoro-sdk
+npm install @open-vector/zoro-sdk
 ```
 
 ## Quick Start
 
 ```typescript
-import { zoro } from '@openvector/zoro-sdk';
+import { zoro } from '@open-vector/zoro-sdk';
 
 // Initialize the SDK
 zoro.init({
@@ -330,7 +330,7 @@ interface TransactionCommand {
 
 ```typescript
 import { useEffect, useState } from 'react';
-import { zoro, SignRequestResponseType } from '@openvector/zoro-sdk';
+import { zoro, SignRequestResponseType } from '@open-vector/zoro-sdk';
 
 function App() {
   const [wallet, setWallet] = useState(null);
@@ -381,7 +381,7 @@ function App() {
 ### Vanilla JavaScript Example
 
 ```javascript
-import { zoro, SignRequestResponseType } from '@openvector/zoro-sdk';
+import { zoro, SignRequestResponseType } from '@open-vector/zoro-sdk';
 
 let wallet = null;
 

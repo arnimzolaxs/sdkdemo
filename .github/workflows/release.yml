@@ -31,9 +31,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build package
-        run: pnpm --filter @openvector/zoro-sdk build
+        run: pnpm --filter @open-vector/zoro-sdk build
 
-      - name: Publish @openvector/zoro-sdk
+      - name: Publish @open-vector/zoro-sdk
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
