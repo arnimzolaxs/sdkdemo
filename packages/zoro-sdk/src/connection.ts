@@ -8,7 +8,7 @@ import {
   WebSocketMessage,
 } from "./types";
 import { generateRequestId } from "./utils";
-
+//dfsghjkl;
 export class Connection {
   walletUrl: string = "https://zorowallet.com";
   apiUrl: string = "https://api.zorowallet.com";
