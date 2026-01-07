@@ -2971,7 +2971,7 @@ class LoopSDK {
     imgWrap.appendChild(img)
 
     const link = document.createElement("button")
-    link.textContent = "Open Wallet"
+    link.textContent = "Connect"
     Object.assign(link.style, {
       marginTop: "8px",
       padding: "10px 16px",
