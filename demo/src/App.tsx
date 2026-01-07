@@ -77,13 +77,13 @@ const [expandedTxnIndex, setExpandedTxnIndex] = useState<number | null>(null);
          setWallet(connectedWallet);
         setStatus({ text: "Connected", connected: true });
         setIsConnecting(false);
-        console.log('Connected!', connectedWallet);
-        // You can now use the provider to interact with the wallet
+        
     },
     onReject: () => {
         setStatus({ text: "Connection rejected", connected: false });
         setIsConnecting(false);
-        console.log('Connection rejected by user.');
+        setWallet(undefined);
+        setResult(null);
     },
 });
     zoro.init({
@@ -120,7 +120,7 @@ const [expandedTxnIndex, setExpandedTxnIndex] = useState<number | null>(null);
 
 
 
-  }, [walletChoice]);
+  });
 
  const handleConnect = async (choice?: "zoro" | "loop") => {
   setIsConnecting(true);
@@ -147,7 +147,12 @@ const [expandedTxnIndex, setExpandedTxnIndex] = useState<number | null>(null);
 
 
   const handleDisconnect = () => {
+    if(walletChoice=='loop'){
+      loop.logout();
+    }
+    else if(walletChoice=="zoro"){
     zoro.disconnect();
+  }
     setWallet(undefined);
     setStatus({ text: "Disconnected", connected: false });
     setResult(null);
@@ -429,33 +434,65 @@ return;
         </button>
       </div>
 {walletChoiceModal && (
-  <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-    <div className="bg-[#0f0f0f] p-6 rounded-2xl space-y-4 w-full max-w-sm border border-gray-800">
-      <h2 className="text-lg font-semibold">Select Wallet</h2>
-      <div className="flex gap-3">
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+    <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0f0f0f] p-6 shadow-2xl">
+      
+      <div className="mb-4 text-center">
+        <h2 className="text-lg font-semibold text-white">
+          Connect Wallet
+        </h2>
+        <p className="mt-1 text-sm text-gray-400">
+          Choose a wallet to continue
+        </p>
+      </div>
+
+      <div className="space-y-3">
         <button
           onClick={() => {
             setWalletChoiceModal(false)
             handleConnect("zoro")
           }}
-          className="flex-1 px-4 py-2 rounded-xl bg-[#1a1a1a] border border-gray-700"
+          className="group flex w-full items-center gap-3 rounded-xl border border-gray-700 bg-[#1a1a1a] px-4 py-3 transition hover:border-red-500/50 hover:bg-[#161616]"
         >
-          Zoro
+          <img
+            src="https://zorowallet.com/favicon.ico"
+            alt="Zoro Wallet"
+            className="h-8 w-8 rounded-md"
+          />
+          <div className="flex flex-col text-left">
+            <span className="font-medium text-white">Zoro Wallet</span>
+           
+          </div>
+          <span className="ml-auto text-gray-500 group-hover:text-white">
+            →
+          </span>
         </button>
+
         <button
           onClick={() => {
             setWalletChoiceModal(false)
             handleConnect("loop")
           }}
-          className="flex-1 px-4 py-2 rounded-xl bg-[#1a1a1a] border border-gray-700"
+          className="group flex w-full items-center gap-3 rounded-xl border border-gray-700 bg-[#1a1a1a] px-4 py-3 transition hover:border-red-500/50 hover:bg-[#161616]"
         >
-          Loop
+          <img
+            src="https://cantonloop.com/favicon.ico"
+            alt="Loop Wallet"
+            className="h-8 w-8 rounded-md"
+          />
+          <div className="flex flex-col text-left">
+            <span className="font-medium text-white">Loop Wallet</span>
+           
+          </div>
+          <span className="ml-auto text-gray-500 group-hover:text-white">
+            →
+          </span>
         </button>
       </div>
-      <div className="flex justify-end">
+      <div className="mt-5 flex justify-center">
         <button
           onClick={() => setWalletChoiceModal(false)}
-          className="px-3 py-1 text-gray-400"
+          className="text-sm text-gray-400 hover:text-white transition"
         >
           Cancel
         </button>
@@ -463,6 +500,7 @@ return;
     </div>
   </div>
 )}
+
 
 
 
